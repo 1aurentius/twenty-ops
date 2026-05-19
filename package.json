@@ -1,0 +1,37 @@
+{
+  "name": "twenty-ops",
+  "version": "0.1.0",
+  "description": "Token-efficient CLI for managing a live Twenty CRM workspace (views, navigation, workflows) — built for command-line AI agents.",
+  "license": "AGPL-3.0-only",
+  "type": "module",
+  "bin": {
+    "twenty-ops": "./bin/twenty-ops.js"
+  },
+  "files": [
+    "dist",
+    "bin",
+    "README.md",
+    "LICENSE.md"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "build": "tsup",
+    "dev": "tsup --watch",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run test/unit",
+    "test:e2e": "vitest run test/e2e",
+    "start": "node dist/cli.js"
+  },
+  "dependencies": {
+    "commander": "^12.1.0",
+    "yaml": "^2.6.1"
+  },
+  "devDependencies": {
+    "@types/node": "^22.10.0",
+    "tsup": "^8.3.5",
+    "typescript": "^5.7.2",
+    "vitest": "^2.1.8"
+  }
+}
