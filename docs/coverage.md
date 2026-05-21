@@ -17,10 +17,10 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 |-------------------------------|---------|------|-------------|-----------|
 | `remote` (config CRUD)        | yes     | ✓    |             | n/a       |
 | `whoami`                      | yes     | ✓    |             |           |
-| `view` (CRUD)                 | yes     |      | partial     | ✓         |
-| `view set-fields`             | yes     |      |             |           |
-| `view set-filters`            | yes     |      |             |           |
-| `view set-sorts`              | yes     |      |             |           |
+| `view` (CRUD)                 | yes     | ✓    | partial     | ✓         |
+| `view set-fields`             | yes     | ✓    |             |           |
+| `view set-filters`            | yes     | ✓    |             |           |
+| `view set-sorts`              | yes     | ✓    |             |           |
 | `nav` (CRUD)                  | yes     |      | partial     | ✓         |
 | `workflow` (record CRUD)      | yes     |      | partial     | ✓         |
 | `workflow set-trigger`        | yes     |      |             | ✓         |

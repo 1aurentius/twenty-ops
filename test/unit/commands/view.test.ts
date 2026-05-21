@@ -1,0 +1,301 @@
+import { mkdirSync, mkdtempSync, rmSync, writeFileSync } from 'node:fs';
+import { tmpdir } from 'node:os';
+import { join } from 'node:path';
+
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
+
+const { HOME } = vi.hoisted(() => ({ HOME: { current: '' } }));
+vi.mock('node:os', async () => {
+  const actual = await vi.importActual<typeof import('node:os')>('node:os');
+  return { ...actual, homedir: () => HOME.current };
+});
+
+import { EXIT } from '../../../src/api/errors.js';
+import { registerViewCommands } from '../../../src/commands/view.js';
+import { runCli } from '../../helpers/cli-harness.js';
+import { type FetchStub, stubFetch } from '../../helpers/graphql-mock.js';
+
+function writeRemote(): void {
+  mkdirSync(join(HOME.current, '.twenty'), { recursive: true });
+  writeFileSync(
+    join(HOME.current, '.twenty', 'config.json'),
+    JSON.stringify({
+      remotes: { test: { apiUrl: 'http://localhost:3001', apiKey: 'k' } },
+      defaultRemote: 'test',
+    }),
+  );
+}
+
+function writeFile(filename: string, content: string): string {
+  const path = join(HOME.current, filename);
+  writeFileSync(path, content);
+  return path;
+}
+
+const VIEW_ID = '11111111-1111-4111-8111-111111111111';
+const OBJECT_ID = '22222222-2222-4222-8222-222222222222';
+const FIELD_ID_A = 'aaaaaaaa-aaaa-4aaa-8aaa-aaaaaaaaaaaa';
+const FIELD_ID_B = 'bbbbbbbb-bbbb-4bbb-8bbb-bbbbbbbbbbbb';
+
+const runView = (...args: string[]) => runCli(registerViewCommands, ['view', ...args]);
+
+interface GqlBody {
+  query: string;
+  variables?: Record<string, unknown>;
+}
+
+function body(call: { body: unknown }): GqlBody {
+  return call.body as GqlBody;
+}
+
+let fetchStub: FetchStub;
+
+beforeEach(() => {
+  HOME.current = mkdtempSync(join(tmpdir(), 'twenty-ops-view-'));
+  writeRemote();
+  fetchStub = stubFetch();
+});
+
+afterEach(() => {
+  fetchStub.restore();
+  try { rmSync(HOME.current, { recursive: true, force: true }); } catch { /* best-effort */ }
+});
+
+describe('view list', () => {
+  it('queries getViews with no filter when no flags are given', async () => {
+    fetchStub.reply('/metadata', { data: { getViews: [] } });
+    await runView('list');
+
+    expect(fetchStub.calls).toHaveLength(1);
+    const call = fetchStub.calls[0]!;
+    expect(call.url).toBe('http://localhost:3001/metadata');
+    expect(body(call).query).toContain('getViews');
+    expect(body(call).variables).toEqual({ objectMetadataId: undefined, viewTypes: undefined });
+  });
+
+  it('forwards a UUID --object without hitting the objects discovery query', async () => {
+    fetchStub.reply('/metadata', { data: { getViews: [] } });
+    await runView('list', '--object', OBJECT_ID);
+
+    expect(fetchStub.calls).toHaveLength(1);
+    expect(body(fetchStub.calls[0]!).variables?.objectMetadataId).toBe(OBJECT_ID);
+  });
+
+  it('resolves a --object name via the objects query, then queries getViews', async () => {
+    fetchStub.reply('/metadata', {
+      data: {
+        objects: { edges: [{ node: { id: OBJECT_ID, nameSingular: 'person', namePlural: 'people', labelSingular: 'Person', isActive: true } }] },
+      },
+    });
+    fetchStub.reply('/metadata', { data: { getViews: [] } });
+
+    await runView('list', '--object', 'person');
+
+    expect(fetchStub.calls).toHaveLength(2);
+    expect(body(fetchStub.calls[0]!).query).toContain('objects(paging:');
+    expect(body(fetchStub.calls[1]!).variables?.objectMetadataId).toBe(OBJECT_ID);
+  });
+
+  it('uppercases --type and passes it as viewTypes', async () => {
+    fetchStub.reply('/metadata', { data: { getViews: [] } });
+    await runView('list', '--type', 'kanban');
+    expect(body(fetchStub.calls[0]!).variables?.viewTypes).toEqual(['KANBAN']);
+  });
+
+  it('renders rows as JSON Lines under --json', async () => {
+    fetchStub.reply('/metadata', {
+      data: {
+        getViews: [
+          { id: VIEW_ID, name: 'X', type: 'TABLE', objectMetadataId: OBJECT_ID, icon: 'IconA', visibility: 'WORKSPACE' },
+        ],
+      },
+    });
+    const { stdout } = await runView('list', '--json');
+    expect(JSON.parse(stdout.trim())).toMatchObject({ id: VIEW_ID, name: 'X', type: 'TABLE' });
+  });
+});
+
+describe('view get', () => {
+  it('emits the detail projection in key=value form', async () => {
+    fetchStub.reply('/metadata', {
+      data: {
+        getView: {
+          id: VIEW_ID,
+          name: 'V',
+          objectMetadataId: OBJECT_ID,
+          type: 'TABLE',
+          icon: 'IconA',
+          position: 0,
+          visibility: 'WORKSPACE',
+          viewFields: [],
+          viewFilters: [],
+          viewSorts: [],
+        },
+      },
+    });
+    const { stdout } = await runView('get', VIEW_ID);
+    expect(stdout).toContain(`id=${VIEW_ID}`);
+    expect(stdout).toContain('name=V');
+    expect(stdout).toContain('viewFields=');
+  });
+
+  it('maps a null getView response to exit code 4 (NOT_FOUND)', async () => {
+    fetchStub.reply('/metadata', { data: { getView: null } });
+    const err = await runView('get', VIEW_ID).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
+  });
+});
+
+describe('view create', () => {
+  it('forwards uppercased type/visibility plus name + objectMetadataId in the mutation input', async () => {
+    fetchStub.reply('/metadata', {
+      data: {
+        createView: { id: VIEW_ID, name: 'New', type: 'TABLE', objectMetadataId: OBJECT_ID, icon: 'IconLayoutList', visibility: 'WORKSPACE' },
+      },
+    });
+    await runView('create', '--object', OBJECT_ID, '--name', 'New', '--type', 'kanban', '--visibility', 'unlisted');
+
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('createView');
+    expect(body(call).variables).toEqual({
+      input: {
+        name: 'New',
+        objectMetadataId: OBJECT_ID,
+        icon: 'IconLayoutList',
+        type: 'KANBAN',
+        visibility: 'UNLISTED',
+      },
+    });
+  });
+});
+
+describe('view update', () => {
+  it('rejects an empty update with USAGE exit code', async () => {
+    const err = await runView('update', VIEW_ID).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+    // No GraphQL traffic should be issued for a rejected update.
+    expect(fetchStub.calls).toHaveLength(0);
+  });
+
+  it('only sends fields that were passed (no undefined keys)', async () => {
+    fetchStub.reply('/metadata', {
+      data: { updateView: { id: VIEW_ID, name: 'Renamed', type: 'TABLE', objectMetadataId: OBJECT_ID, icon: 'IconA', visibility: 'WORKSPACE' } },
+    });
+    await runView('update', VIEW_ID, '--name', 'Renamed');
+    expect(body(fetchStub.calls[0]!).variables).toEqual({ id: VIEW_ID, input: { name: 'Renamed' } });
+  });
+});
+
+describe('view delete', () => {
+  it('sends a deleteView mutation with the view id', async () => {
+    fetchStub.reply('/metadata', { data: { deleteView: true } });
+    const { stdout } = await runView('delete', VIEW_ID);
+    expect(stdout).toContain(`deleted view ${VIEW_ID}`);
+    expect(body(fetchStub.calls[0]!).query).toContain('deleteView');
+    expect(body(fetchStub.calls[0]!).variables).toEqual({ id: VIEW_ID });
+  });
+});
+
+describe('view set-fields (reconciliation)', () => {
+  it('creates every entry when current state is empty', async () => {
+    const file = writeFile('fields.json', JSON.stringify([
+      { fieldMetadataId: FIELD_ID_A, isVisible: true, size: 120, position: 0 },
+      { fieldMetadataId: FIELD_ID_B, isVisible: false, size: 80, position: 1 },
+    ]));
+    fetchStub.reply('/metadata', { data: { getViewFields: [] } });
+    fetchStub.reply('/metadata', { data: { createViewField: { id: 'new-a' } } });
+    fetchStub.reply('/metadata', { data: { createViewField: { id: 'new-b' } } });
+
+    const { stdout } = await runView('set-fields', VIEW_ID, '--file', file);
+
+    expect(stdout).toContain('+2 ~0 -0 =0');
+    // 1 query + 2 create mutations
+    expect(fetchStub.calls).toHaveLength(3);
+    expect(body(fetchStub.calls[1]!).query).toContain('createViewField');
+  });
+
+  it('updates changed entries, removes missing ones, leaves matches alone', async () => {
+    const file = writeFile('fields.json', JSON.stringify([
+      // matches existing exactly → unchanged
+      { fieldMetadataId: FIELD_ID_A, isVisible: true, size: 120, position: 0 },
+      // size differs → update
+      { fieldMetadataId: FIELD_ID_B, isVisible: false, size: 200, position: 1 },
+    ]));
+    fetchStub.reply('/metadata', {
+      data: {
+        getViewFields: [
+          { id: 'cur-a', fieldMetadataId: FIELD_ID_A, isVisible: true, size: 120, position: 0 },
+          { id: 'cur-b', fieldMetadataId: FIELD_ID_B, isVisible: false, size: 80, position: 1 },
+          // not in desired → delete
+          { id: 'cur-c', fieldMetadataId: 'cccccccc-cccc-4ccc-8ccc-cccccccccccc', isVisible: true, size: 100, position: 2 },
+        ],
+      },
+    });
+    fetchStub.reply('/metadata', { data: { updateViewField: { id: 'cur-b' } } });
+    fetchStub.reply('/metadata', { data: { deleteViewField: { id: 'cur-c' } } });
+
+    const { stdout } = await runView('set-fields', VIEW_ID, '--file', file);
+
+    expect(stdout).toContain('+0 ~1 -1 =1');
+    expect(body(fetchStub.calls[1]!).query).toContain('updateViewField');
+    expect(body(fetchStub.calls[2]!).query).toContain('deleteViewField');
+  });
+
+  it('is a no-op when the file matches current state exactly', async () => {
+    const file = writeFile('fields.json', JSON.stringify([
+      { fieldMetadataId: FIELD_ID_A, isVisible: true, size: 120, position: 0 },
+    ]));
+    fetchStub.reply('/metadata', {
+      data: {
+        getViewFields: [{ id: 'cur-a', fieldMetadataId: FIELD_ID_A, isVisible: true, size: 120, position: 0 }],
+      },
+    });
+
+    const { stdout } = await runView('set-fields', VIEW_ID, '--file', file);
+    expect(stdout).toContain('+0 ~0 -0 =1');
+    expect(fetchStub.calls).toHaveLength(1);
+  });
+
+  it('rejects entries missing fieldMetadataId with USAGE', async () => {
+    const file = writeFile('fields.json', JSON.stringify([{ isVisible: true }]));
+    fetchStub.reply('/metadata', { data: { getViewFields: [] } });
+    const err = await runView('set-fields', VIEW_ID, '--file', file).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+});
+
+describe('view set-filters (composite-key reconciliation)', () => {
+  it('treats (fieldMetadataId, subFieldName) as the identity key', async () => {
+    const file = writeFile('filters.json', JSON.stringify([
+      { fieldMetadataId: FIELD_ID_A, operand: 'IS', value: 'x', subFieldName: 'street' },
+      { fieldMetadataId: FIELD_ID_A, operand: 'IS', value: 'y', subFieldName: 'city' },
+    ]));
+    fetchStub.reply('/metadata', {
+      data: {
+        getViewFilters: [
+          // Same fieldMetadataId but different subFieldName — should be matched separately.
+          { id: 'cur-street', fieldMetadataId: FIELD_ID_A, operand: 'IS', value: 'x', subFieldName: 'street' },
+        ],
+      },
+    });
+    fetchStub.reply('/metadata', { data: { createViewFilter: { id: 'new-city' } } });
+
+    const { stdout } = await runView('set-filters', VIEW_ID, '--file', file);
+    expect(stdout).toContain('+1 ~0 -0 =1');
+  });
+});
+
+describe('view set-sorts', () => {
+  it('uppercases direction on create', async () => {
+    const file = writeFile('sorts.json', JSON.stringify([
+      { fieldMetadataId: FIELD_ID_A, direction: 'desc' },
+    ]));
+    fetchStub.reply('/metadata', { data: { getViewSorts: [] } });
+    fetchStub.reply('/metadata', { data: { createViewSort: { id: 'new' } } });
+
+    await runView('set-sorts', VIEW_ID, '--file', file);
+    expect(body(fetchStub.calls[1]!).variables).toMatchObject({
+      input: { viewId: VIEW_ID, fieldMetadataId: FIELD_ID_A, direction: 'DESC' },
+    });
+  });
+});
