@@ -27,6 +27,13 @@ function project(row: Row, fields: string[]): Row {
 
 function cell(value: unknown): string {
   if (value === null || value === undefined) return '';
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '';
+    if (value.every((v) => v === null || typeof v !== 'object')) {
+      return value.map((v) => (v === null ? '' : String(v))).join(',');
+    }
+    return `[${value.length} item${value.length === 1 ? '' : 's'}]`;
+  }
   if (typeof value === 'object') return JSON.stringify(value);
   return String(value);
 }

@@ -57,4 +57,40 @@ describe('emitOne', () => {
     const out = capture(() => emitOne(rows[0]!, ['id', 'name'], { json: true }));
     expect(JSON.parse(out)).toEqual({ id: '1', name: 'Alpha' });
   });
+
+  it('renders empty arrays and nulls as empty values in text mode', () => {
+    const record = { id: '1', viewFields: [] as unknown[], steps: null };
+    const out = capture(() => emitOne(record, ['id', 'viewFields', 'steps'], {}));
+    expect(out).toBe('id=1\nviewFields=\nsteps=\n');
+  });
+
+  it('comma-joins arrays of primitives, and shows a count for arrays of objects', () => {
+    const record = {
+      id: '1',
+      statuses: ['ACTIVE', 'DEACTIVATED'],
+      fields: [{ id: 'a' }, { id: 'b' }, { id: 'c' }],
+    };
+    const out = capture(() => emitOne(record, ['statuses', 'fields'], {}));
+    expect(out).toBe('statuses=ACTIVE,DEACTIVATED\nfields=[3 items]\n');
+  });
+
+  it('preserves array fidelity under --json', () => {
+    const record = { statuses: ['ACTIVE'], fields: [{ id: 'a' }] };
+    const out = capture(() => emitOne(record, ['statuses', 'fields'], { json: true }));
+    expect(JSON.parse(out)).toEqual({ statuses: ['ACTIVE'], fields: [{ id: 'a' }] });
+  });
+});
+
+describe('cell rendering inside tables', () => {
+  it('comma-joins primitive arrays in table cells', () => {
+    const wfRows = [
+      { id: '1', name: 'WF-A', statuses: ['ACTIVE'] },
+      { id: '2', name: 'WF-B', statuses: ['ACTIVE', 'DEACTIVATED'] },
+    ];
+    const out = capture(() => emitList(wfRows, ['id', 'name', 'statuses'], {}));
+    const lines = out.trimEnd().split('\n');
+    expect(lines[0]).toBe('id  name  statuses');
+    expect(lines[1]).toBe('1   WF-A  ACTIVE');
+    expect(lines[2]).toBe('2   WF-B  ACTIVE,DEACTIVATED');
+  });
 });
