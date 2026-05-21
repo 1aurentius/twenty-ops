@@ -21,10 +21,10 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `view set-fields`             | yes     | ✓    |             |           |
 | `view set-filters`            | yes     | ✓    |             |           |
 | `view set-sorts`              | yes     | ✓    |             |           |
-| `nav` (CRUD)                  | yes     |      | partial     | ✓         |
-| `workflow` (record CRUD)      | yes     |      | partial     | ✓         |
-| `workflow set-trigger`        | yes     |      |             | ✓         |
-| `workflow versions/runs`      | yes     |      |             |           |
+| `nav` (CRUD)                  | yes     | ✓    | partial     | ✓         |
+| `workflow` (record CRUD)      | yes     | ✓    | partial     | ✓         |
+| `workflow set-trigger`        | yes     | ✓    |             | ✓         |
+| `workflow versions/runs`      | yes     | ✓    |             |           |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 
