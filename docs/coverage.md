@@ -15,7 +15,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 
 | Domain                        | Mapped  | Unit | Integration | Lifecycle |
 |-------------------------------|---------|------|-------------|-----------|
-| `remote` (config CRUD)        | yes     |      |             | n/a       |
+| `remote` (config CRUD)        | yes     | ✓    |             | n/a       |
 | `whoami`                      | yes     |      |             |           |
 | `view` (CRUD)                 | yes     |      | partial     | ✓         |
 | `view set-fields`             | yes     |      |             |           |
@@ -26,6 +26,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `workflow set-trigger`        | yes     |      |             | ✓         |
 | `workflow versions/runs`      | yes     |      |             |           |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
+| **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 
 ## Not yet mapped (sequenced via the v0.2+ plan)
 
