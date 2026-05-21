@@ -16,7 +16,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | Domain                        | Mapped  | Unit | Integration | Lifecycle |
 |-------------------------------|---------|------|-------------|-----------|
 | `remote` (config CRUD)        | yes     | ✓    |             | n/a       |
-| `whoami`                      | yes     |      |             |           |
+| `whoami`                      | yes     | ✓    |             |           |
 | `view` (CRUD)                 | yes     |      | partial     | ✓         |
 | `view set-fields`             | yes     |      |             |           |
 | `view set-filters`            | yes     |      |             |           |

@@ -2,7 +2,6 @@ import { mkdtempSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 
-import { Command } from 'commander';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 
 const { HOME } = vi.hoisted(() => ({ HOME: { current: '' } }));
@@ -12,45 +11,9 @@ vi.mock('node:os', async () => {
 });
 
 import { registerRemoteCommands } from '../../../src/commands/remote.js';
+import { runCli } from '../../helpers/cli-harness.js';
 
-interface RunResult {
-  stdout: string;
-  stderr: string;
-}
-
-/**
- * Builds a fresh program with the same global flags as the real CLI, registers
- * `remote`, and runs it with `args`. Returns captured stdout + stderr.
- *
- * Future command-tests reuse this shape — only the `register*` call changes.
- */
-async function runRemote(...args: string[]): Promise<RunResult> {
-  const stdoutChunks: string[] = [];
-  const stderrChunks: string[] = [];
-  const spyOut = vi.spyOn(process.stdout, 'write').mockImplementation((chunk) => {
-    stdoutChunks.push(typeof chunk === 'string' ? chunk : chunk.toString());
-    return true;
-  });
-  const spyErr = vi.spyOn(process.stderr, 'write').mockImplementation((chunk) => {
-    stderrChunks.push(typeof chunk === 'string' ? chunk : chunk.toString());
-    return true;
-  });
-  try {
-    const program = new Command();
-    program
-      .exitOverride()
-      .option('--remote <name>')
-      .option('--json')
-      .option('--fields <list>')
-      .option('-q, --quiet');
-    registerRemoteCommands(program);
-    await program.parseAsync(['node', 'cli', 'remote', ...args]);
-  } finally {
-    spyOut.mockRestore();
-    spyErr.mockRestore();
-  }
-  return { stdout: stdoutChunks.join(''), stderr: stderrChunks.join('') };
-}
+const runRemote = (...args: string[]) => runCli(registerRemoteCommands, ['remote', ...args]);
 
 beforeEach(() => {
   HOME.current = mkdtempSync(join(tmpdir(), 'twenty-ops-cmd-'));
