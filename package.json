@@ -22,6 +22,12 @@
     "typecheck": "tsc --noEmit",
     "test": "vitest run test/unit",
     "test:e2e": "vitest run test/e2e",
+    "test:integration": "TWENTY_INTEGRATION=1 vitest run test/integration",
+    "test:drift": "TWENTY_INTEGRATION=1 vitest run test/integration/schema-drift.int.test.ts",
+    "test:up": "docker compose -f deploy/docker-compose.yml --env-file deploy/.env.test up -d",
+    "test:down": "docker compose -f deploy/docker-compose.yml --env-file deploy/.env.test stop",
+    "snapshot:schema": "tsx scripts/snapshot-schema.ts",
+    "check": "npm run typecheck && npm test",
     "start": "node dist/cli.js"
   },
   "dependencies": {
@@ -31,6 +37,7 @@
   "devDependencies": {
     "@types/node": "^22.10.0",
     "tsup": "^8.3.5",
+    "tsx": "^4.19.0",
     "typescript": "^5.7.2",
     "vitest": "^2.1.8"
   }

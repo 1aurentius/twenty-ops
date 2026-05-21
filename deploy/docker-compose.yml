@@ -1,0 +1,85 @@
+name: twenty-ops-test
+
+# Pinned Twenty stack used by integration + lifecycle tests.
+# - Image is pinned by digest, not :latest, so the schema-drift test stays
+#   meaningful between Twenty releases. To upgrade Twenty, change the digest,
+#   regenerate test/fixtures/schema.snapshot.json (`npm run snapshot:schema`),
+#   and update any tests broken by the new surface — all in one explicit PR.
+# - Runs alongside the developer's main Twenty stack (e.g. usva-crm/deploy/
+#   on port 3000); uses its own project name + ports + volumes so nothing
+#   collides. Override TWENTY_OPS_TEST_PORT if 3001 is taken.
+
+services:
+  server:
+    image: twentycrm/twenty@sha256:ca7d9ce34fb2d14fcdfa17eefabc85fd510d64200823ae8012771f9edf92f458
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+    ports:
+      - "${TWENTY_OPS_TEST_PORT:-3001}:3000"
+    environment:
+      NODE_PORT: 3000
+      PG_DATABASE_URL: postgres://postgres:postgres@db:5432/default
+      SERVER_URL: ${SERVER_URL:-http://localhost:3001}
+      REDIS_URL: redis://redis:6379
+      APP_SECRET: ${APP_SECRET:-test-only-not-a-real-secret-replace-locally}
+      STORAGE_TYPE: local
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    healthcheck:
+      test: curl --fail http://localhost:3000/healthz
+      interval: 5s
+      timeout: 5s
+      retries: 20
+    restart: unless-stopped
+
+  worker:
+    image: twentycrm/twenty@sha256:ca7d9ce34fb2d14fcdfa17eefabc85fd510d64200823ae8012771f9edf92f458
+    volumes:
+      - server-local-data:/app/packages/twenty-server/.local-storage
+    command: ["yarn", "worker:prod"]
+    environment:
+      PG_DATABASE_URL: postgres://postgres:postgres@db:5432/default
+      SERVER_URL: ${SERVER_URL:-http://localhost:3001}
+      REDIS_URL: redis://redis:6379
+      DISABLE_DB_MIGRATIONS: "true"
+      DISABLE_CRON_JOBS_REGISTRATION: "true"
+      APP_SECRET: ${APP_SECRET:-test-only-not-a-real-secret-replace-locally}
+      STORAGE_TYPE: local
+    depends_on:
+      db:
+        condition: service_healthy
+      server:
+        condition: service_healthy
+    restart: unless-stopped
+
+  db:
+    image: postgres:16
+    volumes:
+      - db-data:/var/lib/postgresql/data
+    environment:
+      POSTGRES_DB: default
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_USER: postgres
+    healthcheck:
+      test: pg_isready -U postgres -h localhost -d postgres
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis
+    command: ["--maxmemory-policy", "noeviction"]
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+volumes:
+  db-data:
+  server-local-data:

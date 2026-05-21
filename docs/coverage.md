@@ -1,0 +1,42 @@
+# Coverage matrix
+
+What's mapped from Twenty's API surface into `twenty-ops`, with the testing
+status of each command. Updated as PRs land. Columns:
+
+- **Mapped** — `yes` (full surface) / `partial` (some operations) / `no`
+- **Unit** — hermetic command tests (`test/unit/commands/*.test.ts`)
+- **Integration** — real-GraphQL tests against the pinned stack (`test/integration/*.int.test.ts`)
+- **Lifecycle** — multi-command flow in `test/e2e/lifecycle.test.ts`
+
+A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
+"Per-feature merge bar" section in the README.
+
+## v0.1 commands (backfill in progress)
+
+| Domain                        | Mapped  | Unit | Integration | Lifecycle |
+|-------------------------------|---------|------|-------------|-----------|
+| `remote` (config CRUD)        | yes     |      |             | n/a       |
+| `whoami`                      | yes     |      |             |           |
+| `view` (CRUD)                 | yes     |      | partial     | ✓         |
+| `view set-fields`             | yes     |      |             |           |
+| `view set-filters`            | yes     |      |             |           |
+| `view set-sorts`              | yes     |      |             |           |
+| `nav` (CRUD)                  | yes     |      | partial     | ✓         |
+| `workflow` (record CRUD)      | yes     |      | partial     | ✓         |
+| `workflow set-trigger`        | yes     |      |             | ✓         |
+| `workflow versions/runs`      | yes     |      |             |           |
+| **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
+
+## Not yet mapped (sequenced via the v0.2+ plan)
+
+| Domain                              | API status | Phase |
+|-------------------------------------|------------|-------|
+| Records CRUD (per object)           | Stable GraphQL mutations    | 2     |
+| API keys                            | Stable mutations            | 3     |
+| Webhooks                            | Stable mutations            | 3     |
+| Settings (read)                     | `currentWorkspace`/etc      | 3     |
+| Object metadata editing             | Stable mutations            | 4     |
+| Field metadata editing              | Stable mutations            | 4     |
+| Members + roles + permissions       | Stable, complex             | 5     |
+| Workflow steps + activation         | Blocked on Twenty image     | 6     |
+| AI agents, page layouts, marketplace, SSO | Stable but lower priority | stretch |

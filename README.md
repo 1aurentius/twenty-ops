@@ -107,13 +107,47 @@ So v1 covers workflow **record CRUD**, **draft trigger editing**, and full
 *activating/running* workflows need Twenty resolvers this build does not expose
 — that is a later phase (and useful feedback for the Twenty team).
 
-## Development
+## Development & testing
 
 ```bash
+npm run check                    # typecheck + unit tests (the local gate)
 npm run typecheck
-npm test                         # unit tests (hermetic)
-TWENTY_E2E=1 npm run test:e2e     # e2e — local stack only; refuses non-local hosts
+npm test                         # unit tests (hermetic, < 1s)
+TWENTY_E2E=1 npm run test:e2e    # legacy e2e (local stack, refuses non-local hosts)
 ```
+
+Integration tests run against a real Twenty stack. Bring up the pinned
+local stack (separate from your main dev workspace — own port, own
+volume):
+
+```bash
+cd deploy && cp .env.test.example .env.test && cd ..
+npm run test:up                  # starts pinned Twenty on http://localhost:3001
+# (one-time: sign up in the UI, generate an API key,
+#  then: twenty-ops remote add twenty-ops-test --url http://localhost:3001 --key …)
+TWENTY_OPS_TEST_REMOTE=twenty-ops-test npm run test:integration
+npm run test:down
+```
+
+**Schema-drift detection.** `test/fixtures/schema.snapshot.json` records
+every Core + Metadata GraphQL resolver and its argument names against
+the pinned Twenty image. `npm run test:drift` fails if the live stack
+exposes anything different. When Twenty is intentionally upgraded
+(digest in `deploy/docker-compose.yml`):
+
+```bash
+TWENTY_OPS_TEST_REMOTE=twenty-ops-test npm run snapshot:schema
+# review the diff in test/fixtures/schema.snapshot.json, then commit
+```
+
+**Per-feature merge bar (strict).** A new command merges only when all
+of these are green: unit tests for the command (arg parsing, query
+shape, output, error paths), an integration test (success + ≥1 error
+path against the pinned stack), a lifecycle e2e entry chaining it with
+other commands, schema snapshot updated if new resolvers are touched,
+and the row in [`docs/coverage.md`](docs/coverage.md) updated. See the
+plan in `.claude/plans/i-want-to-create-crispy-sparrow.md` for the
+full buildout sequence.
 
 Architecture: `commander` for the command tree; a thin hand-written
 `fetch`-based GraphQL client (no per-workspace code generation, so the tool

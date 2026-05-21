@@ -1,0 +1,2723 @@
+{
+  "generatedAt": "2026-05-21T10:01:40.148Z",
+  "endpoints": {
+    "core": {
+      "queries": {
+        "attachment": [
+          "filter"
+        ],
+        "attachments": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "attachmentsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "blocklist": [
+          "filter"
+        ],
+        "blocklists": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "blocklistsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "calendarChannel": [
+          "filter"
+        ],
+        "calendarChannelEventAssociation": [
+          "filter"
+        ],
+        "calendarChannelEventAssociations": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "calendarChannelEventAssociationsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "calendarChannels": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "calendarChannelsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "calendarEvent": [
+          "filter"
+        ],
+        "calendarEventParticipant": [
+          "filter"
+        ],
+        "calendarEventParticipants": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "calendarEventParticipantsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "calendarEvents": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "calendarEventsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "companies": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "companiesGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "company": [
+          "filter"
+        ],
+        "companyDuplicates": [
+          "data",
+          "ids"
+        ],
+        "connectedAccount": [
+          "filter"
+        ],
+        "connectedAccounts": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "connectedAccountsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "dashboard": [
+          "filter"
+        ],
+        "dashboards": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "dashboardsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "emailAttachmentRef": [
+          "filter"
+        ],
+        "emailAttachmentRefs": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "emailAttachmentRefsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "internalNote": [
+          "filter"
+        ],
+        "internalNotes": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "internalNotesGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "message": [
+          "filter"
+        ],
+        "messageChannel": [
+          "filter"
+        ],
+        "messageChannelMessageAssociation": [
+          "filter"
+        ],
+        "messageChannelMessageAssociationMessageFolder": [
+          "filter"
+        ],
+        "messageChannelMessageAssociationMessageFolders": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "messageChannelMessageAssociationMessageFoldersGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "messageChannelMessageAssociations": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "messageChannelMessageAssociationsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "messageChannels": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "messageChannelsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "messageFolder": [
+          "filter"
+        ],
+        "messageFolders": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "messageFoldersGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "messageParticipant": [
+          "filter"
+        ],
+        "messageParticipants": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "messageParticipantsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "messageThread": [
+          "filter"
+        ],
+        "messageThreads": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "messageThreadsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "messages": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "messagesGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "note": [
+          "filter"
+        ],
+        "noteTarget": [
+          "filter"
+        ],
+        "noteTargets": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "noteTargetsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "notes": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "notesGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "opportunities": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "opportunitiesGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "opportunity": [
+          "filter"
+        ],
+        "people": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "peopleGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "person": [
+          "filter"
+        ],
+        "personDuplicates": [
+          "data",
+          "ids"
+        ],
+        "stakeholderInteraction": [
+          "filter"
+        ],
+        "stakeholderInteractions": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "stakeholderInteractionsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "task": [
+          "filter"
+        ],
+        "taskTarget": [
+          "filter"
+        ],
+        "taskTargets": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "taskTargetsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "tasks": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "tasksGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "threadAccessRequest": [
+          "filter"
+        ],
+        "threadAccessRequests": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "threadAccessRequestsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "timelineActivities": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "timelineActivitiesGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "timelineActivity": [
+          "filter"
+        ],
+        "workflow": [
+          "filter"
+        ],
+        "workflowAutomatedTrigger": [
+          "filter"
+        ],
+        "workflowAutomatedTriggers": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "workflowAutomatedTriggersGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "workflowRun": [
+          "filter"
+        ],
+        "workflowRuns": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "workflowRunsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "workflowVersion": [
+          "filter"
+        ],
+        "workflowVersions": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "workflowVersionsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "workflows": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "workflowsGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ],
+        "workspaceMember": [
+          "filter"
+        ],
+        "workspaceMembers": [
+          "after",
+          "before",
+          "filter",
+          "first",
+          "last",
+          "offset",
+          "orderBy"
+        ],
+        "workspaceMembersGroupBy": [
+          "filter",
+          "groupBy",
+          "limit",
+          "offsetForRecords",
+          "orderBy",
+          "orderByForRecords",
+          "viewId"
+        ]
+      },
+      "mutations": {
+        "createAttachment": [
+          "data",
+          "upsert"
+        ],
+        "createAttachments": [
+          "data",
+          "upsert"
+        ],
+        "createBlocklist": [
+          "data",
+          "upsert"
+        ],
+        "createBlocklists": [
+          "data",
+          "upsert"
+        ],
+        "createCalendarChannel": [
+          "data",
+          "upsert"
+        ],
+        "createCalendarChannelEventAssociation": [
+          "data",
+          "upsert"
+        ],
+        "createCalendarChannelEventAssociations": [
+          "data",
+          "upsert"
+        ],
+        "createCalendarChannels": [
+          "data",
+          "upsert"
+        ],
+        "createCalendarEvent": [
+          "data",
+          "upsert"
+        ],
+        "createCalendarEventParticipant": [
+          "data",
+          "upsert"
+        ],
+        "createCalendarEventParticipants": [
+          "data",
+          "upsert"
+        ],
+        "createCalendarEvents": [
+          "data",
+          "upsert"
+        ],
+        "createCompanies": [
+          "data",
+          "upsert"
+        ],
+        "createCompany": [
+          "data",
+          "upsert"
+        ],
+        "createConnectedAccount": [
+          "data",
+          "upsert"
+        ],
+        "createConnectedAccounts": [
+          "data",
+          "upsert"
+        ],
+        "createDashboard": [
+          "data",
+          "upsert"
+        ],
+        "createDashboards": [
+          "data",
+          "upsert"
+        ],
+        "createEmailAttachmentRef": [
+          "data",
+          "upsert"
+        ],
+        "createEmailAttachmentRefs": [
+          "data",
+          "upsert"
+        ],
+        "createInternalNote": [
+          "data",
+          "upsert"
+        ],
+        "createInternalNotes": [
+          "data",
+          "upsert"
+        ],
+        "createMessage": [
+          "data",
+          "upsert"
+        ],
+        "createMessageChannel": [
+          "data",
+          "upsert"
+        ],
+        "createMessageChannelMessageAssociation": [
+          "data",
+          "upsert"
+        ],
+        "createMessageChannelMessageAssociationMessageFolder": [
+          "data",
+          "upsert"
+        ],
+        "createMessageChannelMessageAssociationMessageFolders": [
+          "data",
+          "upsert"
+        ],
+        "createMessageChannelMessageAssociations": [
+          "data",
+          "upsert"
+        ],
+        "createMessageChannels": [
+          "data",
+          "upsert"
+        ],
+        "createMessageFolder": [
+          "data",
+          "upsert"
+        ],
+        "createMessageFolders": [
+          "data",
+          "upsert"
+        ],
+        "createMessageParticipant": [
+          "data",
+          "upsert"
+        ],
+        "createMessageParticipants": [
+          "data",
+          "upsert"
+        ],
+        "createMessageThread": [
+          "data",
+          "upsert"
+        ],
+        "createMessageThreads": [
+          "data",
+          "upsert"
+        ],
+        "createMessages": [
+          "data",
+          "upsert"
+        ],
+        "createNote": [
+          "data",
+          "upsert"
+        ],
+        "createNoteTarget": [
+          "data",
+          "upsert"
+        ],
+        "createNoteTargets": [
+          "data",
+          "upsert"
+        ],
+        "createNotes": [
+          "data",
+          "upsert"
+        ],
+        "createOpportunities": [
+          "data",
+          "upsert"
+        ],
+        "createOpportunity": [
+          "data",
+          "upsert"
+        ],
+        "createPeople": [
+          "data",
+          "upsert"
+        ],
+        "createPerson": [
+          "data",
+          "upsert"
+        ],
+        "createStakeholderInteraction": [
+          "data",
+          "upsert"
+        ],
+        "createStakeholderInteractions": [
+          "data",
+          "upsert"
+        ],
+        "createTask": [
+          "data",
+          "upsert"
+        ],
+        "createTaskTarget": [
+          "data",
+          "upsert"
+        ],
+        "createTaskTargets": [
+          "data",
+          "upsert"
+        ],
+        "createTasks": [
+          "data",
+          "upsert"
+        ],
+        "createThreadAccessRequest": [
+          "data",
+          "upsert"
+        ],
+        "createThreadAccessRequests": [
+          "data",
+          "upsert"
+        ],
+        "createTimelineActivities": [
+          "data",
+          "upsert"
+        ],
+        "createTimelineActivity": [
+          "data",
+          "upsert"
+        ],
+        "createWorkflow": [
+          "data",
+          "upsert"
+        ],
+        "createWorkflowAutomatedTrigger": [
+          "data",
+          "upsert"
+        ],
+        "createWorkflowAutomatedTriggers": [
+          "data",
+          "upsert"
+        ],
+        "createWorkflowRun": [
+          "data",
+          "upsert"
+        ],
+        "createWorkflowRuns": [
+          "data",
+          "upsert"
+        ],
+        "createWorkflowVersion": [
+          "data",
+          "upsert"
+        ],
+        "createWorkflowVersions": [
+          "data",
+          "upsert"
+        ],
+        "createWorkflows": [
+          "data",
+          "upsert"
+        ],
+        "createWorkspaceMember": [
+          "data",
+          "upsert"
+        ],
+        "createWorkspaceMembers": [
+          "data",
+          "upsert"
+        ],
+        "deleteAttachment": [
+          "id"
+        ],
+        "deleteAttachments": [
+          "filter"
+        ],
+        "deleteBlocklist": [
+          "id"
+        ],
+        "deleteBlocklists": [
+          "filter"
+        ],
+        "deleteCalendarChannel": [
+          "id"
+        ],
+        "deleteCalendarChannelEventAssociation": [
+          "id"
+        ],
+        "deleteCalendarChannelEventAssociations": [
+          "filter"
+        ],
+        "deleteCalendarChannels": [
+          "filter"
+        ],
+        "deleteCalendarEvent": [
+          "id"
+        ],
+        "deleteCalendarEventParticipant": [
+          "id"
+        ],
+        "deleteCalendarEventParticipants": [
+          "filter"
+        ],
+        "deleteCalendarEvents": [
+          "filter"
+        ],
+        "deleteCompanies": [
+          "filter"
+        ],
+        "deleteCompany": [
+          "id"
+        ],
+        "deleteConnectedAccount": [
+          "id"
+        ],
+        "deleteConnectedAccounts": [
+          "filter"
+        ],
+        "deleteDashboard": [
+          "id"
+        ],
+        "deleteDashboards": [
+          "filter"
+        ],
+        "deleteEmailAttachmentRef": [
+          "id"
+        ],
+        "deleteEmailAttachmentRefs": [
+          "filter"
+        ],
+        "deleteInternalNote": [
+          "id"
+        ],
+        "deleteInternalNotes": [
+          "filter"
+        ],
+        "deleteMessage": [
+          "id"
+        ],
+        "deleteMessageChannel": [
+          "id"
+        ],
+        "deleteMessageChannelMessageAssociation": [
+          "id"
+        ],
+        "deleteMessageChannelMessageAssociationMessageFolder": [
+          "id"
+        ],
+        "deleteMessageChannelMessageAssociationMessageFolders": [
+          "filter"
+        ],
+        "deleteMessageChannelMessageAssociations": [
+          "filter"
+        ],
+        "deleteMessageChannels": [
+          "filter"
+        ],
+        "deleteMessageFolder": [
+          "id"
+        ],
+        "deleteMessageFolders": [
+          "filter"
+        ],
+        "deleteMessageParticipant": [
+          "id"
+        ],
+        "deleteMessageParticipants": [
+          "filter"
+        ],
+        "deleteMessageThread": [
+          "id"
+        ],
+        "deleteMessageThreads": [
+          "filter"
+        ],
+        "deleteMessages": [
+          "filter"
+        ],
+        "deleteNote": [
+          "id"
+        ],
+        "deleteNoteTarget": [
+          "id"
+        ],
+        "deleteNoteTargets": [
+          "filter"
+        ],
+        "deleteNotes": [
+          "filter"
+        ],
+        "deleteOpportunities": [
+          "filter"
+        ],
+        "deleteOpportunity": [
+          "id"
+        ],
+        "deletePeople": [
+          "filter"
+        ],
+        "deletePerson": [
+          "id"
+        ],
+        "deleteStakeholderInteraction": [
+          "id"
+        ],
+        "deleteStakeholderInteractions": [
+          "filter"
+        ],
+        "deleteTask": [
+          "id"
+        ],
+        "deleteTaskTarget": [
+          "id"
+        ],
+        "deleteTaskTargets": [
+          "filter"
+        ],
+        "deleteTasks": [
+          "filter"
+        ],
+        "deleteThreadAccessRequest": [
+          "id"
+        ],
+        "deleteThreadAccessRequests": [
+          "filter"
+        ],
+        "deleteTimelineActivities": [
+          "filter"
+        ],
+        "deleteTimelineActivity": [
+          "id"
+        ],
+        "deleteWorkflow": [
+          "id"
+        ],
+        "deleteWorkflowAutomatedTrigger": [
+          "id"
+        ],
+        "deleteWorkflowAutomatedTriggers": [
+          "filter"
+        ],
+        "deleteWorkflowRun": [
+          "id"
+        ],
+        "deleteWorkflowRuns": [
+          "filter"
+        ],
+        "deleteWorkflowVersion": [
+          "id"
+        ],
+        "deleteWorkflowVersions": [
+          "filter"
+        ],
+        "deleteWorkflows": [
+          "filter"
+        ],
+        "deleteWorkspaceMember": [
+          "id"
+        ],
+        "deleteWorkspaceMembers": [
+          "filter"
+        ],
+        "destroyAttachment": [
+          "id"
+        ],
+        "destroyAttachments": [
+          "filter"
+        ],
+        "destroyBlocklist": [
+          "id"
+        ],
+        "destroyBlocklists": [
+          "filter"
+        ],
+        "destroyCalendarChannel": [
+          "id"
+        ],
+        "destroyCalendarChannelEventAssociation": [
+          "id"
+        ],
+        "destroyCalendarChannelEventAssociations": [
+          "filter"
+        ],
+        "destroyCalendarChannels": [
+          "filter"
+        ],
+        "destroyCalendarEvent": [
+          "id"
+        ],
+        "destroyCalendarEventParticipant": [
+          "id"
+        ],
+        "destroyCalendarEventParticipants": [
+          "filter"
+        ],
+        "destroyCalendarEvents": [
+          "filter"
+        ],
+        "destroyCompanies": [
+          "filter"
+        ],
+        "destroyCompany": [
+          "id"
+        ],
+        "destroyConnectedAccount": [
+          "id"
+        ],
+        "destroyConnectedAccounts": [
+          "filter"
+        ],
+        "destroyDashboard": [
+          "id"
+        ],
+        "destroyDashboards": [
+          "filter"
+        ],
+        "destroyEmailAttachmentRef": [
+          "id"
+        ],
+        "destroyEmailAttachmentRefs": [
+          "filter"
+        ],
+        "destroyInternalNote": [
+          "id"
+        ],
+        "destroyInternalNotes": [
+          "filter"
+        ],
+        "destroyMessage": [
+          "id"
+        ],
+        "destroyMessageChannel": [
+          "id"
+        ],
+        "destroyMessageChannelMessageAssociation": [
+          "id"
+        ],
+        "destroyMessageChannelMessageAssociationMessageFolder": [
+          "id"
+        ],
+        "destroyMessageChannelMessageAssociationMessageFolders": [
+          "filter"
+        ],
+        "destroyMessageChannelMessageAssociations": [
+          "filter"
+        ],
+        "destroyMessageChannels": [
+          "filter"
+        ],
+        "destroyMessageFolder": [
+          "id"
+        ],
+        "destroyMessageFolders": [
+          "filter"
+        ],
+        "destroyMessageParticipant": [
+          "id"
+        ],
+        "destroyMessageParticipants": [
+          "filter"
+        ],
+        "destroyMessageThread": [
+          "id"
+        ],
+        "destroyMessageThreads": [
+          "filter"
+        ],
+        "destroyMessages": [
+          "filter"
+        ],
+        "destroyNote": [
+          "id"
+        ],
+        "destroyNoteTarget": [
+          "id"
+        ],
+        "destroyNoteTargets": [
+          "filter"
+        ],
+        "destroyNotes": [
+          "filter"
+        ],
+        "destroyOpportunities": [
+          "filter"
+        ],
+        "destroyOpportunity": [
+          "id"
+        ],
+        "destroyPeople": [
+          "filter"
+        ],
+        "destroyPerson": [
+          "id"
+        ],
+        "destroyStakeholderInteraction": [
+          "id"
+        ],
+        "destroyStakeholderInteractions": [
+          "filter"
+        ],
+        "destroyTask": [
+          "id"
+        ],
+        "destroyTaskTarget": [
+          "id"
+        ],
+        "destroyTaskTargets": [
+          "filter"
+        ],
+        "destroyTasks": [
+          "filter"
+        ],
+        "destroyThreadAccessRequest": [
+          "id"
+        ],
+        "destroyThreadAccessRequests": [
+          "filter"
+        ],
+        "destroyTimelineActivities": [
+          "filter"
+        ],
+        "destroyTimelineActivity": [
+          "id"
+        ],
+        "destroyWorkflow": [
+          "id"
+        ],
+        "destroyWorkflowAutomatedTrigger": [
+          "id"
+        ],
+        "destroyWorkflowAutomatedTriggers": [
+          "filter"
+        ],
+        "destroyWorkflowRun": [
+          "id"
+        ],
+        "destroyWorkflowRuns": [
+          "filter"
+        ],
+        "destroyWorkflowVersion": [
+          "id"
+        ],
+        "destroyWorkflowVersions": [
+          "filter"
+        ],
+        "destroyWorkflows": [
+          "filter"
+        ],
+        "destroyWorkspaceMember": [
+          "id"
+        ],
+        "destroyWorkspaceMembers": [
+          "filter"
+        ],
+        "mergeCompanies": [
+          "conflictPriorityIndex",
+          "dryRun",
+          "ids"
+        ],
+        "mergePeople": [
+          "conflictPriorityIndex",
+          "dryRun",
+          "ids"
+        ],
+        "restoreAttachment": [
+          "id"
+        ],
+        "restoreAttachments": [
+          "filter"
+        ],
+        "restoreBlocklist": [
+          "id"
+        ],
+        "restoreBlocklists": [
+          "filter"
+        ],
+        "restoreCalendarChannel": [
+          "id"
+        ],
+        "restoreCalendarChannelEventAssociation": [
+          "id"
+        ],
+        "restoreCalendarChannelEventAssociations": [
+          "filter"
+        ],
+        "restoreCalendarChannels": [
+          "filter"
+        ],
+        "restoreCalendarEvent": [
+          "id"
+        ],
+        "restoreCalendarEventParticipant": [
+          "id"
+        ],
+        "restoreCalendarEventParticipants": [
+          "filter"
+        ],
+        "restoreCalendarEvents": [
+          "filter"
+        ],
+        "restoreCompanies": [
+          "filter"
+        ],
+        "restoreCompany": [
+          "id"
+        ],
+        "restoreConnectedAccount": [
+          "id"
+        ],
+        "restoreConnectedAccounts": [
+          "filter"
+        ],
+        "restoreDashboard": [
+          "id"
+        ],
+        "restoreDashboards": [
+          "filter"
+        ],
+        "restoreEmailAttachmentRef": [
+          "id"
+        ],
+        "restoreEmailAttachmentRefs": [
+          "filter"
+        ],
+        "restoreInternalNote": [
+          "id"
+        ],
+        "restoreInternalNotes": [
+          "filter"
+        ],
+        "restoreMessage": [
+          "id"
+        ],
+        "restoreMessageChannel": [
+          "id"
+        ],
+        "restoreMessageChannelMessageAssociation": [
+          "id"
+        ],
+        "restoreMessageChannelMessageAssociationMessageFolder": [
+          "id"
+        ],
+        "restoreMessageChannelMessageAssociationMessageFolders": [
+          "filter"
+        ],
+        "restoreMessageChannelMessageAssociations": [
+          "filter"
+        ],
+        "restoreMessageChannels": [
+          "filter"
+        ],
+        "restoreMessageFolder": [
+          "id"
+        ],
+        "restoreMessageFolders": [
+          "filter"
+        ],
+        "restoreMessageParticipant": [
+          "id"
+        ],
+        "restoreMessageParticipants": [
+          "filter"
+        ],
+        "restoreMessageThread": [
+          "id"
+        ],
+        "restoreMessageThreads": [
+          "filter"
+        ],
+        "restoreMessages": [
+          "filter"
+        ],
+        "restoreNote": [
+          "id"
+        ],
+        "restoreNoteTarget": [
+          "id"
+        ],
+        "restoreNoteTargets": [
+          "filter"
+        ],
+        "restoreNotes": [
+          "filter"
+        ],
+        "restoreOpportunities": [
+          "filter"
+        ],
+        "restoreOpportunity": [
+          "id"
+        ],
+        "restorePeople": [
+          "filter"
+        ],
+        "restorePerson": [
+          "id"
+        ],
+        "restoreStakeholderInteraction": [
+          "id"
+        ],
+        "restoreStakeholderInteractions": [
+          "filter"
+        ],
+        "restoreTask": [
+          "id"
+        ],
+        "restoreTaskTarget": [
+          "id"
+        ],
+        "restoreTaskTargets": [
+          "filter"
+        ],
+        "restoreTasks": [
+          "filter"
+        ],
+        "restoreThreadAccessRequest": [
+          "id"
+        ],
+        "restoreThreadAccessRequests": [
+          "filter"
+        ],
+        "restoreTimelineActivities": [
+          "filter"
+        ],
+        "restoreTimelineActivity": [
+          "id"
+        ],
+        "restoreWorkflow": [
+          "id"
+        ],
+        "restoreWorkflowAutomatedTrigger": [
+          "id"
+        ],
+        "restoreWorkflowAutomatedTriggers": [
+          "filter"
+        ],
+        "restoreWorkflowRun": [
+          "id"
+        ],
+        "restoreWorkflowRuns": [
+          "filter"
+        ],
+        "restoreWorkflowVersion": [
+          "id"
+        ],
+        "restoreWorkflowVersions": [
+          "filter"
+        ],
+        "restoreWorkflows": [
+          "filter"
+        ],
+        "restoreWorkspaceMember": [
+          "id"
+        ],
+        "restoreWorkspaceMembers": [
+          "filter"
+        ],
+        "updateAttachment": [
+          "data",
+          "id"
+        ],
+        "updateAttachments": [
+          "data",
+          "filter"
+        ],
+        "updateBlocklist": [
+          "data",
+          "id"
+        ],
+        "updateBlocklists": [
+          "data",
+          "filter"
+        ],
+        "updateCalendarChannel": [
+          "data",
+          "id"
+        ],
+        "updateCalendarChannelEventAssociation": [
+          "data",
+          "id"
+        ],
+        "updateCalendarChannelEventAssociations": [
+          "data",
+          "filter"
+        ],
+        "updateCalendarChannels": [
+          "data",
+          "filter"
+        ],
+        "updateCalendarEvent": [
+          "data",
+          "id"
+        ],
+        "updateCalendarEventParticipant": [
+          "data",
+          "id"
+        ],
+        "updateCalendarEventParticipants": [
+          "data",
+          "filter"
+        ],
+        "updateCalendarEvents": [
+          "data",
+          "filter"
+        ],
+        "updateCompanies": [
+          "data",
+          "filter"
+        ],
+        "updateCompany": [
+          "data",
+          "id"
+        ],
+        "updateConnectedAccount": [
+          "data",
+          "id"
+        ],
+        "updateConnectedAccounts": [
+          "data",
+          "filter"
+        ],
+        "updateDashboard": [
+          "data",
+          "id"
+        ],
+        "updateDashboards": [
+          "data",
+          "filter"
+        ],
+        "updateEmailAttachmentRef": [
+          "data",
+          "id"
+        ],
+        "updateEmailAttachmentRefs": [
+          "data",
+          "filter"
+        ],
+        "updateInternalNote": [
+          "data",
+          "id"
+        ],
+        "updateInternalNotes": [
+          "data",
+          "filter"
+        ],
+        "updateMessage": [
+          "data",
+          "id"
+        ],
+        "updateMessageChannel": [
+          "data",
+          "id"
+        ],
+        "updateMessageChannelMessageAssociation": [
+          "data",
+          "id"
+        ],
+        "updateMessageChannelMessageAssociationMessageFolder": [
+          "data",
+          "id"
+        ],
+        "updateMessageChannelMessageAssociationMessageFolders": [
+          "data",
+          "filter"
+        ],
+        "updateMessageChannelMessageAssociations": [
+          "data",
+          "filter"
+        ],
+        "updateMessageChannels": [
+          "data",
+          "filter"
+        ],
+        "updateMessageFolder": [
+          "data",
+          "id"
+        ],
+        "updateMessageFolders": [
+          "data",
+          "filter"
+        ],
+        "updateMessageParticipant": [
+          "data",
+          "id"
+        ],
+        "updateMessageParticipants": [
+          "data",
+          "filter"
+        ],
+        "updateMessageThread": [
+          "data",
+          "id"
+        ],
+        "updateMessageThreads": [
+          "data",
+          "filter"
+        ],
+        "updateMessages": [
+          "data",
+          "filter"
+        ],
+        "updateNote": [
+          "data",
+          "id"
+        ],
+        "updateNoteTarget": [
+          "data",
+          "id"
+        ],
+        "updateNoteTargets": [
+          "data",
+          "filter"
+        ],
+        "updateNotes": [
+          "data",
+          "filter"
+        ],
+        "updateOpportunities": [
+          "data",
+          "filter"
+        ],
+        "updateOpportunity": [
+          "data",
+          "id"
+        ],
+        "updatePeople": [
+          "data",
+          "filter"
+        ],
+        "updatePerson": [
+          "data",
+          "id"
+        ],
+        "updateStakeholderInteraction": [
+          "data",
+          "id"
+        ],
+        "updateStakeholderInteractions": [
+          "data",
+          "filter"
+        ],
+        "updateTask": [
+          "data",
+          "id"
+        ],
+        "updateTaskTarget": [
+          "data",
+          "id"
+        ],
+        "updateTaskTargets": [
+          "data",
+          "filter"
+        ],
+        "updateTasks": [
+          "data",
+          "filter"
+        ],
+        "updateThreadAccessRequest": [
+          "data",
+          "id"
+        ],
+        "updateThreadAccessRequests": [
+          "data",
+          "filter"
+        ],
+        "updateTimelineActivities": [
+          "data",
+          "filter"
+        ],
+        "updateTimelineActivity": [
+          "data",
+          "id"
+        ],
+        "updateWorkflow": [
+          "data",
+          "id"
+        ],
+        "updateWorkflowAutomatedTrigger": [
+          "data",
+          "id"
+        ],
+        "updateWorkflowAutomatedTriggers": [
+          "data",
+          "filter"
+        ],
+        "updateWorkflowRun": [
+          "data",
+          "id"
+        ],
+        "updateWorkflowRuns": [
+          "data",
+          "filter"
+        ],
+        "updateWorkflowVersion": [
+          "data",
+          "id"
+        ],
+        "updateWorkflowVersions": [
+          "data",
+          "filter"
+        ],
+        "updateWorkflows": [
+          "data",
+          "filter"
+        ],
+        "updateWorkspaceMember": [
+          "data",
+          "id"
+        ],
+        "updateWorkspaceMembers": [
+          "data",
+          "filter"
+        ]
+      }
+    },
+    "metadata": {
+      "queries": {
+        "agentTurns": [
+          "agentId"
+        ],
+        "apiKey": [
+          "input"
+        ],
+        "apiKeys": [],
+        "applicationConnectionProviders": [
+          "applicationId"
+        ],
+        "applicationRegistrationTarballUrl": [
+          "id"
+        ],
+        "barChartData": [
+          "input"
+        ],
+        "billingPortalSession": [
+          "returnUrlPath"
+        ],
+        "chatMessages": [
+          "threadId"
+        ],
+        "chatStreamCatchupChunks": [
+          "threadId"
+        ],
+        "chatThread": [
+          "id"
+        ],
+        "chatThreads": [],
+        "checkUserExists": [
+          "captchaToken",
+          "email"
+        ],
+        "checkWorkspaceInviteHashIsValid": [
+          "inviteHash"
+        ],
+        "commandMenuItem": [
+          "id"
+        ],
+        "commandMenuItems": [],
+        "connectedAccountById": [
+          "id"
+        ],
+        "connectedAccounts": [],
+        "currentUser": [],
+        "currentWorkspace": [],
+        "enterpriseCheckoutSession": [
+          "billingInterval"
+        ],
+        "enterprisePortalSession": [
+          "returnUrlPath"
+        ],
+        "enterpriseSubscriptionStatus": [],
+        "eventLogs": [
+          "input"
+        ],
+        "field": [
+          "id"
+        ],
+        "fields": [
+          "filter",
+          "paging"
+        ],
+        "findApplicationRegistrationByClientId": [
+          "clientId"
+        ],
+        "findApplicationRegistrationByUniversalIdentifier": [
+          "universalIdentifier"
+        ],
+        "findApplicationRegistrationStats": [
+          "id"
+        ],
+        "findApplicationRegistrationVariables": [
+          "applicationRegistrationId"
+        ],
+        "findManyAgents": [],
+        "findManyApplicationRegistrations": [],
+        "findManyApplications": [],
+        "findManyLogicFunctions": [],
+        "findManyMarketplaceApps": [],
+        "findManyPublicDomains": [],
+        "findMarketplaceAppDetail": [
+          "universalIdentifier"
+        ],
+        "findOneAgent": [
+          "input"
+        ],
+        "findOneApplication": [
+          "id",
+          "universalIdentifier"
+        ],
+        "findOneApplicationRegistration": [
+          "id"
+        ],
+        "findOneLogicFunction": [
+          "input"
+        ],
+        "findWorkspaceFromInviteHash": [
+          "inviteHash"
+        ],
+        "findWorkspaceInvitations": [],
+        "frontComponent": [
+          "id"
+        ],
+        "frontComponents": [],
+        "getAddressDetails": [
+          "placeId",
+          "token"
+        ],
+        "getAiSystemPromptPreview": [],
+        "getApprovedAccessDomains": [],
+        "getAutoCompleteAddress": [
+          "address",
+          "country",
+          "isFieldCity",
+          "token"
+        ],
+        "getAvailablePackages": [
+          "input"
+        ],
+        "getConnectedImapSmtpCaldavAccount": [
+          "id"
+        ],
+        "getEmailingDomains": [],
+        "getLogicFunctionSourceCode": [
+          "input"
+        ],
+        "getPageLayout": [
+          "id"
+        ],
+        "getPageLayoutTab": [
+          "id"
+        ],
+        "getPageLayoutTabs": [
+          "pageLayoutId"
+        ],
+        "getPageLayoutWidget": [
+          "id"
+        ],
+        "getPageLayoutWidgets": [
+          "pageLayoutTabId"
+        ],
+        "getPageLayouts": [
+          "objectMetadataId",
+          "pageLayoutType"
+        ],
+        "getPublicWorkspaceDataByDomain": [
+          "origin"
+        ],
+        "getPublicWorkspaceDataById": [
+          "id"
+        ],
+        "getResourceCreditUsage": [],
+        "getRoles": [],
+        "getSSOIdentityProviders": [],
+        "getToolIndex": [],
+        "getToolInputSchema": [
+          "toolName"
+        ],
+        "getUsageAnalytics": [
+          "input"
+        ],
+        "getView": [
+          "id"
+        ],
+        "getViewField": [
+          "id"
+        ],
+        "getViewFieldGroup": [
+          "id"
+        ],
+        "getViewFieldGroups": [
+          "viewId"
+        ],
+        "getViewFields": [
+          "viewId"
+        ],
+        "getViewFilter": [
+          "id"
+        ],
+        "getViewFilterGroup": [
+          "id"
+        ],
+        "getViewFilterGroups": [
+          "viewId"
+        ],
+        "getViewFilters": [
+          "viewId"
+        ],
+        "getViewGroup": [
+          "id"
+        ],
+        "getViewGroups": [
+          "viewId"
+        ],
+        "getViewSort": [
+          "id"
+        ],
+        "getViewSorts": [
+          "viewId"
+        ],
+        "getViews": [
+          "objectMetadataId",
+          "viewTypes"
+        ],
+        "index": [
+          "id"
+        ],
+        "indexMetadatas": [
+          "filter",
+          "paging"
+        ],
+        "lineChartData": [
+          "input"
+        ],
+        "listPlans": [],
+        "minimalMetadata": [],
+        "myCalendarChannels": [
+          "connectedAccountId"
+        ],
+        "myConnectedAccounts": [],
+        "myMessageChannels": [
+          "connectedAccountId"
+        ],
+        "myMessageFolders": [
+          "messageChannelId"
+        ],
+        "navigationMenuItem": [
+          "id"
+        ],
+        "navigationMenuItems": [],
+        "object": [
+          "id"
+        ],
+        "objectRecordCounts": [],
+        "objects": [
+          "filter",
+          "paging"
+        ],
+        "pieChartData": [
+          "input"
+        ],
+        "skill": [
+          "id"
+        ],
+        "skills": [],
+        "validatePasswordResetToken": [
+          "passwordResetToken"
+        ],
+        "webhook": [
+          "id"
+        ],
+        "webhooks": []
+      },
+      "mutations": {
+        "activateSkill": [
+          "id"
+        ],
+        "activateWorkspace": [
+          "data"
+        ],
+        "addQueryToEventStream": [
+          "input"
+        ],
+        "archiveChatThread": [
+          "id"
+        ],
+        "assignRoleToAgent": [
+          "agentId",
+          "roleId"
+        ],
+        "assignRoleToApiKey": [
+          "apiKeyId",
+          "roleId"
+        ],
+        "authorizeApp": [
+          "clientId",
+          "codeChallenge",
+          "redirectUrl",
+          "scope",
+          "state"
+        ],
+        "cancelSwitchBillingInterval": [],
+        "cancelSwitchBillingPlan": [],
+        "cancelSwitchResourceCreditPrice": [],
+        "checkCustomDomainValidRecords": [],
+        "checkPublicDomainValidRecords": [
+          "domain"
+        ],
+        "checkoutSession": [
+          "plan",
+          "recurringInterval",
+          "requirePaymentMethod",
+          "successUrlPath"
+        ],
+        "createApiKey": [
+          "input"
+        ],
+        "createApplicationRegistration": [
+          "input"
+        ],
+        "createApplicationRegistrationVariable": [
+          "input"
+        ],
+        "createApprovedAccessDomain": [
+          "input"
+        ],
+        "createChatThread": [],
+        "createCommandMenuItem": [
+          "input"
+        ],
+        "createDevelopmentApplication": [
+          "name",
+          "universalIdentifier"
+        ],
+        "createEmailGroupChannel": [
+          "input"
+        ],
+        "createEmailingDomain": [
+          "domain",
+          "driver"
+        ],
+        "createFrontComponent": [
+          "input"
+        ],
+        "createManyNavigationMenuItems": [
+          "inputs"
+        ],
+        "createManyViewFieldGroups": [
+          "inputs"
+        ],
+        "createManyViewFields": [
+          "inputs"
+        ],
+        "createManyViewGroups": [
+          "inputs"
+        ],
+        "createNavigationMenuItem": [
+          "input"
+        ],
+        "createOIDCIdentityProvider": [
+          "input"
+        ],
+        "createObjectEvent": [
+          "event",
+          "objectMetadataId",
+          "properties",
+          "recordId"
+        ],
+        "createOneAgent": [
+          "input"
+        ],
+        "createOneAppToken": [
+          "input"
+        ],
+        "createOneField": [
+          "input"
+        ],
+        "createOneLogicFunction": [
+          "input"
+        ],
+        "createOneObject": [
+          "input"
+        ],
+        "createOneRole": [
+          "createRoleInput"
+        ],
+        "createPageLayout": [
+          "input"
+        ],
+        "createPageLayoutTab": [
+          "input"
+        ],
+        "createPageLayoutWidget": [
+          "input"
+        ],
+        "createPublicDomain": [
+          "applicationId",
+          "domain"
+        ],
+        "createSAMLIdentityProvider": [
+          "input"
+        ],
+        "createSkill": [
+          "input"
+        ],
+        "createView": [
+          "input"
+        ],
+        "createViewField": [
+          "input"
+        ],
+        "createViewFieldGroup": [
+          "input"
+        ],
+        "createViewFilter": [
+          "input"
+        ],
+        "createViewFilterGroup": [
+          "input"
+        ],
+        "createViewGroup": [
+          "input"
+        ],
+        "createViewSort": [
+          "input"
+        ],
+        "createWebhook": [
+          "input"
+        ],
+        "deactivateSkill": [
+          "id"
+        ],
+        "deleteApplicationRegistration": [
+          "id"
+        ],
+        "deleteApplicationRegistrationVariable": [
+          "id"
+        ],
+        "deleteApprovedAccessDomain": [
+          "input"
+        ],
+        "deleteChatThread": [
+          "id"
+        ],
+        "deleteCommandMenuItem": [
+          "id"
+        ],
+        "deleteConnectedAccount": [
+          "id"
+        ],
+        "deleteCurrentWorkspace": [],
+        "deleteEmailGroupChannel": [
+          "id"
+        ],
+        "deleteEmailingDomain": [
+          "id"
+        ],
+        "deleteFrontComponent": [
+          "id"
+        ],
+        "deleteManyNavigationMenuItems": [
+          "ids"
+        ],
+        "deleteNavigationMenuItem": [
+          "id"
+        ],
+        "deleteOneAgent": [
+          "input"
+        ],
+        "deleteOneField": [
+          "input"
+        ],
+        "deleteOneLogicFunction": [
+          "input"
+        ],
+        "deleteOneObject": [
+          "input"
+        ],
+        "deleteOneRole": [
+          "roleId"
+        ],
+        "deletePublicDomain": [
+          "domain"
+        ],
+        "deleteQueuedChatMessage": [
+          "messageId"
+        ],
+        "deleteSSOIdentityProvider": [
+          "input"
+        ],
+        "deleteSkill": [
+          "id"
+        ],
+        "deleteTwoFactorAuthenticationMethod": [
+          "twoFactorAuthenticationMethodId"
+        ],
+        "deleteUser": [],
+        "deleteUserFromWorkspace": [
+          "workspaceMemberIdToDelete"
+        ],
+        "deleteView": [
+          "id"
+        ],
+        "deleteViewField": [
+          "input"
+        ],
+        "deleteViewFieldGroup": [
+          "input"
+        ],
+        "deleteViewFilter": [
+          "input"
+        ],
+        "deleteViewFilterGroup": [
+          "id"
+        ],
+        "deleteViewGroup": [
+          "input"
+        ],
+        "deleteViewSort": [
+          "input"
+        ],
+        "deleteWebhook": [
+          "id"
+        ],
+        "deleteWorkspaceInvitation": [
+          "appTokenId"
+        ],
+        "destroyPageLayout": [
+          "id"
+        ],
+        "destroyPageLayoutTab": [
+          "id"
+        ],
+        "destroyPageLayoutWidget": [
+          "id"
+        ],
+        "destroyView": [
+          "id"
+        ],
+        "destroyViewField": [
+          "input"
+        ],
+        "destroyViewFieldGroup": [
+          "input"
+        ],
+        "destroyViewFilter": [
+          "input"
+        ],
+        "destroyViewFilterGroup": [
+          "id"
+        ],
+        "destroyViewGroup": [
+          "input"
+        ],
+        "destroyViewSort": [
+          "input"
+        ],
+        "duplicateDashboard": [
+          "id"
+        ],
+        "editSSOIdentityProvider": [
+          "input"
+        ],
+        "emailPasswordResetLink": [
+          "email",
+          "workspaceId"
+        ],
+        "endSubscriptionTrialPeriod": [],
+        "evaluateAgentTurn": [
+          "turnId"
+        ],
+        "executeOneLogicFunction": [
+          "input"
+        ],
+        "generateApiKeyToken": [
+          "apiKeyId",
+          "expiresAt"
+        ],
+        "generateApplicationToken": [
+          "applicationId"
+        ],
+        "generateTransientToken": [],
+        "getAuthTokensFromLoginToken": [
+          "loginToken",
+          "origin"
+        ],
+        "getAuthTokensFromOTP": [
+          "captchaToken",
+          "loginToken",
+          "origin",
+          "otp"
+        ],
+        "getAuthorizationUrlForSSO": [
+          "input"
+        ],
+        "getLoginTokenFromCredentials": [
+          "captchaToken",
+          "email",
+          "locale",
+          "origin",
+          "password",
+          "verifyEmailRedirectPath"
+        ],
+        "impersonate": [
+          "userId",
+          "workspaceId"
+        ],
+        "initiateOTPProvisioning": [
+          "loginToken",
+          "origin"
+        ],
+        "initiateOTPProvisioningForAuthenticatedUser": [],
+        "installApplication": [
+          "appRegistrationId",
+          "version"
+        ],
+        "installMarketplaceApp": [
+          "universalIdentifier",
+          "version"
+        ],
+        "refreshEnterpriseValidityToken": [],
+        "removeQueryFromEventStream": [
+          "input"
+        ],
+        "removeRoleFromAgent": [
+          "agentId"
+        ],
+        "renameChatThread": [
+          "id",
+          "title"
+        ],
+        "renewApplicationToken": [
+          "applicationRefreshToken"
+        ],
+        "renewToken": [
+          "appToken"
+        ],
+        "resendEmailVerificationToken": [
+          "email",
+          "origin"
+        ],
+        "resendWorkspaceInvitation": [
+          "appTokenId"
+        ],
+        "resetPageLayoutTabToDefault": [
+          "id"
+        ],
+        "resetPageLayoutToDefault": [
+          "id"
+        ],
+        "resetPageLayoutWidgetToDefault": [
+          "id"
+        ],
+        "revokeApiKey": [
+          "input"
+        ],
+        "rotateApplicationRegistrationClientSecret": [
+          "id"
+        ],
+        "runEvaluationInput": [
+          "agentId",
+          "input"
+        ],
+        "runWorkspaceMigration": [
+          "workspaceMigration"
+        ],
+        "saveImapSmtpCaldavAccount": [
+          "accountOwnerId",
+          "connectionParameters",
+          "handle",
+          "id"
+        ],
+        "sendChatMessage": [
+          "browsingContext",
+          "fileIds",
+          "messageId",
+          "modelId",
+          "text",
+          "threadId"
+        ],
+        "sendEmail": [
+          "input"
+        ],
+        "sendInvitations": [
+          "emails",
+          "roleId"
+        ],
+        "setEnterpriseKey": [
+          "enterpriseKey"
+        ],
+        "setResourceCreditSubscriptionPrice": [
+          "priceId"
+        ],
+        "signIn": [
+          "captchaToken",
+          "email",
+          "locale",
+          "password",
+          "verifyEmailRedirectPath"
+        ],
+        "signUp": [
+          "captchaToken",
+          "email",
+          "locale",
+          "password",
+          "verifyEmailRedirectPath"
+        ],
+        "signUpInNewWorkspace": [],
+        "signUpInWorkspace": [
+          "captchaToken",
+          "email",
+          "locale",
+          "password",
+          "verifyEmailRedirectPath",
+          "workspaceId",
+          "workspaceInviteHash",
+          "workspacePersonalInviteToken"
+        ],
+        "skipBookOnboardingStep": [],
+        "skipSyncEmailOnboardingStep": [],
+        "startChannelSync": [
+          "connectedAccountId"
+        ],
+        "stopAgentChatStream": [
+          "threadId"
+        ],
+        "switchBillingPlan": [],
+        "switchSubscriptionInterval": [],
+        "syncApplication": [
+          "manifest"
+        ],
+        "syncMarketplaceCatalog": [],
+        "trackAnalytics": [
+          "event",
+          "name",
+          "properties",
+          "type"
+        ],
+        "transferApplicationRegistrationOwnership": [
+          "applicationRegistrationId",
+          "targetWorkspaceSubdomain"
+        ],
+        "unarchiveChatThread": [
+          "id"
+        ],
+        "uninstallApplication": [
+          "universalIdentifier"
+        ],
+        "updateApiKey": [
+          "input"
+        ],
+        "updateApplicationRegistration": [
+          "input"
+        ],
+        "updateApplicationRegistrationVariable": [
+          "input"
+        ],
+        "updateCalendarChannel": [
+          "input"
+        ],
+        "updateCommandMenuItem": [
+          "input"
+        ],
+        "updateFrontComponent": [
+          "input"
+        ],
+        "updateLabPublicFeatureFlag": [
+          "input"
+        ],
+        "updateManyNavigationMenuItems": [
+          "inputs"
+        ],
+        "updateManyViewGroups": [
+          "inputs"
+        ],
+        "updateMessageChannel": [
+          "input"
+        ],
+        "updateMessageFolder": [
+          "input"
+        ],
+        "updateMessageFolders": [
+          "input"
+        ],
+        "updateNavigationMenuItem": [
+          "input"
+        ],
+        "updateOneAgent": [
+          "input"
+        ],
+        "updateOneApplicationVariable": [
+          "applicationId",
+          "key",
+          "value"
+        ],
+        "updateOneField": [
+          "input"
+        ],
+        "updateOneLogicFunction": [
+          "input"
+        ],
+        "updateOneObject": [
+          "input"
+        ],
+        "updateOneRole": [
+          "updateRoleInput"
+        ],
+        "updatePageLayout": [
+          "id",
+          "input"
+        ],
+        "updatePageLayoutTab": [
+          "id",
+          "input"
+        ],
+        "updatePageLayoutWidget": [
+          "id",
+          "input"
+        ],
+        "updatePageLayoutWithTabsAndWidgets": [
+          "id",
+          "input"
+        ],
+        "updatePasswordViaResetToken": [
+          "newPassword",
+          "passwordResetToken"
+        ],
+        "updatePublicDomain": [
+          "applicationId",
+          "domain"
+        ],
+        "updateSkill": [
+          "input"
+        ],
+        "updateUserEmail": [
+          "newEmail",
+          "verifyEmailRedirectPath"
+        ],
+        "updateView": [
+          "id",
+          "input"
+        ],
+        "updateViewField": [
+          "input"
+        ],
+        "updateViewFieldGroup": [
+          "input"
+        ],
+        "updateViewFilter": [
+          "input"
+        ],
+        "updateViewFilterGroup": [
+          "id",
+          "input"
+        ],
+        "updateViewGroup": [
+          "input"
+        ],
+        "updateViewSort": [
+          "input"
+        ],
+        "updateWebhook": [
+          "input"
+        ],
+        "updateWorkspace": [
+          "data"
+        ],
+        "updateWorkspaceMemberRole": [
+          "roleId",
+          "workspaceMemberId"
+        ],
+        "updateWorkspaceMemberSettings": [
+          "input"
+        ],
+        "upgradeApplication": [
+          "appRegistrationId",
+          "targetVersion"
+        ],
+        "uploadAiChatFile": [
+          "file"
+        ],
+        "uploadAppTarball": [
+          "file",
+          "universalIdentifier"
+        ],
+        "uploadApplicationFile": [
+          "applicationUniversalIdentifier",
+          "file",
+          "fileFolder",
+          "filePath"
+        ],
+        "uploadEmailAttachmentFile": [
+          "file"
+        ],
+        "uploadFilesFieldFile": [
+          "fieldMetadataId",
+          "file"
+        ],
+        "uploadFilesFieldFileByUniversalIdentifier": [
+          "fieldMetadataUniversalIdentifier",
+          "file"
+        ],
+        "uploadWorkflowFile": [
+          "file"
+        ],
+        "uploadWorkspaceLogo": [
+          "file"
+        ],
+        "uploadWorkspaceMemberProfilePicture": [
+          "file"
+        ],
+        "upsertFieldPermissions": [
+          "upsertFieldPermissionsInput"
+        ],
+        "upsertFieldsWidget": [
+          "input"
+        ],
+        "upsertObjectPermissions": [
+          "upsertObjectPermissionsInput"
+        ],
+        "upsertPermissionFlags": [
+          "upsertPermissionFlagsInput"
+        ],
+        "upsertRowLevelPermissionPredicates": [
+          "input"
+        ],
+        "upsertViewWidget": [
+          "input"
+        ],
+        "validateApprovedAccessDomain": [
+          "input"
+        ],
+        "verifyEmailAndGetLoginToken": [
+          "captchaToken",
+          "email",
+          "emailVerificationToken",
+          "origin"
+        ],
+        "verifyEmailAndGetWorkspaceAgnosticToken": [
+          "captchaToken",
+          "email",
+          "emailVerificationToken"
+        ],
+        "verifyEmailingDomain": [
+          "id"
+        ],
+        "verifyTwoFactorAuthenticationMethodForAuthenticatedUser": [
+          "otp"
+        ]
+      }
+    }
+  }
+}
