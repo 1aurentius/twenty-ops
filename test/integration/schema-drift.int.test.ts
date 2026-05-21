@@ -14,6 +14,7 @@ import {
   type SchemaSnapshot,
   snapshotEndpoint,
 } from '../../src/lib/introspection.js';
+import { INTEGRATION, REMOTE, assertLocalRemote } from '../helpers/integration-setup.js';
 
 /*
  * Schema-drift integration test.
@@ -30,10 +31,6 @@ import {
  *
  *   TWENTY_INTEGRATION=1 npm run test:integration
  */
-const INTEGRATION = process.env.TWENTY_INTEGRATION === '1';
-const REMOTE = process.env.TWENTY_OPS_TEST_REMOTE ?? 'localhost';
-const LOCAL_HOSTS = new Set(['localhost', '127.0.0.1', '::1']);
-
 const here = dirname(fileURLToPath(import.meta.url));
 const SNAPSHOT_PATH = join(here, '..', 'fixtures', 'schema.snapshot.json');
 
@@ -43,11 +40,8 @@ describe.skipIf(!INTEGRATION)('schema drift', () => {
   let metadata: GraphQLClient;
 
   beforeAll(() => {
+    assertLocalRemote();
     const remote = resolveRemote(REMOTE);
-    const host = new URL(remote.apiUrl).hostname;
-    if (!LOCAL_HOSTS.has(host)) {
-      throw new Error(`refusing to run against non-local host "${host}" (remote=${remote.name})`);
-    }
     committed = JSON.parse(readFileSync(SNAPSHOT_PATH, 'utf8')) as SchemaSnapshot;
     const endpoints = deriveEndpoints(remote.apiUrl);
     core = new GraphQLClient(endpoints.core, remote.apiKey);

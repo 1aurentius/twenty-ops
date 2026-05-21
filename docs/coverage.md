@@ -15,18 +15,19 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 
 | Domain                        | Mapped  | Unit | Integration | Lifecycle |
 |-------------------------------|---------|------|-------------|-----------|
-| `remote` (config CRUD)        | yes     | ✓    |             | n/a       |
-| `whoami`                      | yes     | ✓    |             |           |
-| `view` (CRUD)                 | yes     | ✓    | partial     | ✓         |
-| `view set-fields`             | yes     | ✓    |             |           |
+| `remote` (config CRUD)        | yes     | ✓    | n/a         | n/a       |
+| `whoami`                      | yes     | ✓    | ✓           |           |
+| `view` (CRUD)                 | yes     | ✓    | ✓           | ✓         |
+| `view set-fields`             | yes     | ✓    | ✓           |           |
 | `view set-filters`            | yes     | ✓    |             |           |
 | `view set-sorts`              | yes     | ✓    |             |           |
-| `nav` (CRUD)                  | yes     | ✓    | partial     | ✓         |
-| `workflow` (record CRUD)      | yes     | ✓    | partial     | ✓         |
-| `workflow set-trigger`        | yes     | ✓    |             | ✓         |
+| `nav` (CRUD)                  | yes     | ✓    | ✓           | ✓         |
+| `workflow` (record CRUD)      | yes     | ✓    | ✓           | ✓         |
+| `workflow set-trigger`        | yes     | ✓    | ✓           | ✓         |
 | `workflow versions/runs`      | yes     | ✓    |             |           |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
+| **Framework: seed automation**| n/a     | n/a  | ✓ (verified) | n/a      |
 
 ## Not yet mapped (sequenced via the v0.2+ plan)
 
