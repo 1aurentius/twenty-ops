@@ -1,0 +1,78 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+# Cancel in-progress runs for the same PR/branch when a new commit lands.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  check:
+    name: typecheck + unit
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+      - run: npm run typecheck
+      - run: npm test
+
+  integration:
+    name: integration (real Twenty stack)
+    runs-on: ubuntu-latest
+    # The seed script + Twenty image pull dominate the runtime — keep CI from
+    # hanging if one of them never returns.
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+      - run: npm ci
+
+      # Cache the pinned Twenty image so subsequent CI runs skip the pull.
+      # The cache key tracks the compose file so a digest change invalidates it.
+      - name: Cache Twenty docker image
+        id: image-cache
+        uses: actions/cache@v4
+        with:
+          path: /tmp/twenty-image.tar
+          key: twenty-image-${{ hashFiles('deploy/docker-compose.yml') }}
+      - name: Load cached Twenty image
+        if: steps.image-cache.outputs.cache-hit == 'true'
+        run: docker load -i /tmp/twenty-image.tar
+      - name: Pull + save Twenty image
+        if: steps.image-cache.outputs.cache-hit != 'true'
+        run: |
+          IMAGE=$(grep -m1 'image: twentycrm/twenty' deploy/docker-compose.yml | awk '{print $2}')
+          docker pull "$IMAGE"
+          docker save "$IMAGE" -o /tmp/twenty-image.tar
+
+      - name: Boot pinned stack + seed test workspace
+        run: npm run test:up
+
+      - name: Run integration tests
+        run: npm run test:integration
+
+      - name: Run legacy e2e (lifecycle)
+        env:
+          TWENTY_E2E: '1'
+          TWENTY_E2E_REMOTE: twenty-ops-test
+        run: npm run test:e2e
+
+      - name: Dump server logs on failure
+        if: failure()
+        run: docker compose -f deploy/docker-compose.yml --env-file deploy/.env.test logs --tail=200
+
+      - name: Tear down
+        if: always()
+        run: docker compose -f deploy/docker-compose.yml --env-file deploy/.env.test down -v
