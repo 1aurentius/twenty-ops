@@ -54,6 +54,7 @@ with the `TWENTY_API_URL` + `TWENTY_API_KEY` environment variables.
 ```
 remote    list | current | add <name> --url --key | use <name> | remove <name>
 whoami    show the connected workspace
+doctor    end-to-end self-check (remote + auth + schema drift + view round-trip)
 
 view      list [--object <ref>] [--type <T>]   list views
           get <viewId>                          view + its fields/filters/sorts
@@ -128,6 +129,12 @@ npm run test:up                  # starts pinned Twenty on http://localhost:3001
 TWENTY_OPS_TEST_REMOTE=twenty-ops-test npm run test:integration
 npm run test:down
 ```
+
+**Self-check.** Once a remote is configured, `twenty-ops doctor` runs a
+quick end-to-end probe — remote resolves, `whoami` returns a workspace,
+the live schema matches the committed snapshot, a throwaway view
+round-trips cleanly. `--json` emits a structured summary suitable for an
+agent to branch on. Exits non-zero on the first failing step.
 
 **Schema-drift detection.** `test/fixtures/schema.snapshot.json` records
 every Core + Metadata GraphQL resolver and its argument names against

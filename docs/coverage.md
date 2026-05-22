@@ -25,6 +25,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `workflow` (record CRUD)      | yes     | ✓    | ✓           | ✓         |
 | `workflow set-trigger`        | yes     | ✓    | ✓           | ✓         |
 | `workflow versions/runs`      | yes     | ✓    |             |           |
+| `doctor` (self-check)         | yes     | ✓    | ✓           | n/a       |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 | **Framework: seed automation**| n/a     | n/a  | ✓ (verified) | n/a      |

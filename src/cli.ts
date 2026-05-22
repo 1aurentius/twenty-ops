@@ -1,5 +1,6 @@
 import { Command, CommanderError } from 'commander';
 import { CliError, EXIT } from './api/errors.js';
+import { registerDoctorCommand } from './commands/doctor.js';
 import { registerNavCommands } from './commands/nav.js';
 import { registerRemoteCommands } from './commands/remote.js';
 import { registerViewCommands } from './commands/view.js';
@@ -21,6 +22,7 @@ program
 
 registerRemoteCommands(program);
 registerWhoamiCommand(program);
+registerDoctorCommand(program);
 registerViewCommands(program);
 registerNavCommands(program);
 registerWorkflowCommands(program);
