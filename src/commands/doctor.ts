@@ -60,10 +60,14 @@ export function registerDoctorCommand(program: Command): void {
       await runner.run('view-round-trip', 'create-read-delete a throwaway view on `person`', async () => {
         const personId = await resolveObjectId(ctx.metadata, 'person');
         const name = `twenty-ops-doctor-${Date.now()}`;
+        // visibility=WORKSPACE — an API key isn't tied to a user, so it can't own
+        // UNLISTED (personal) views. Twenty rejects that combination with
+        // "You do not have permission to create workspace-level views"
+        // (the message is misleading; it actually refers to UNLISTED).
         const created = await ctx.metadata.request<{ createView: { id: string } }>(
           `mutation($input: CreateViewInput!) { createView(input: $input) { id } }`,
           {
-            input: { name, objectMetadataId: personId, icon: 'IconLayoutList', type: 'TABLE', visibility: 'UNLISTED' },
+            input: { name, objectMetadataId: personId, icon: 'IconLayoutList', type: 'TABLE', visibility: 'WORKSPACE' },
           },
         );
         const viewId = created.createView.id;

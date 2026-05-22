@@ -45,7 +45,11 @@ export function emitList<T extends object>(
   opts: OutputOpts,
 ): void {
   const rows = records as readonly Row[];
-  const fields = selectedFields(opts, columns);
+  // Empty `columns` means "no caller-defined projection" — fall back to the
+  // keys of the first row (matches emitOne's contract). Callers that genuinely
+  // want zero columns pass --fields '' explicitly.
+  const fallback = columns.length ? columns : (rows[0] ? Object.keys(rows[0]) : []);
+  const fields = selectedFields(opts, fallback);
 
   if (opts.json) {
     for (const row of rows) process.stdout.write(`${JSON.stringify(project(row, fields))}\n`);

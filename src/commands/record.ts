@@ -103,7 +103,7 @@ function registerList(record: Command): void {
           order_by: opts.orderBy,
         });
         const rows = pickList(payload, names.namePlural);
-        emitList(rows, defaultColumns(rows), ctx.out);
+        emitList(rows, recordColumns(ctx, rows), ctx.out);
       },
     );
 }
@@ -117,7 +117,7 @@ function registerGet(record: Command): void {
       const names = await resolveNames(ctx, ref);
       const payload = await ctx.rest.get<unknown>(`/${names.namePlural}/${id}`);
       const row = pickSingle(payload, names.nameSingular);
-      emitOne(row, defaultColumns([row]), ctx.out);
+      emitOne(row, recordColumns(ctx, [row]), ctx.out);
     });
 }
 
@@ -270,18 +270,23 @@ function capitalize(s: string): string {
 }
 
 /**
- * Pick a sensible default column projection for records.
+ * Pick the columns to emit for records.
  *
- * Records can have many fields; default to id + name-ish + createdAt/updatedAt
- * if present. Users override with `--fields`.
+ * Records can have 20-30 fields; the trade-off:
+ *   - Text mode: project to id + name-ish + timestamps for a readable table.
+ *     The user/agent adds `--fields` to expand.
+ *   - JSON mode: emit every field. JSON is machine-read, so width doesn't
+ *     hurt and "everything the API returned" is the useful contract.
+ *
+ * Explicit `--fields` always wins (selectedFields handles that in output.ts).
  */
-function defaultColumns(rows: RecordRow[]): string[] {
+function recordColumns(ctx: Ctx, rows: RecordRow[]): string[] {
+  if (ctx.out.json) return []; // emit every field under --json
   const sample = rows[0];
   if (!sample) return ['id'];
   const wanted = ['id', 'name', 'displayName', 'title', 'email', 'createdAt', 'updatedAt'];
   const present = wanted.filter((k) => k in sample);
   if (present.length >= 2) return present;
-  // Fallback: first 6 top-level keys, but always start with id.
   const keys = Object.keys(sample);
   const ordered = keys.includes('id') ? ['id', ...keys.filter((k) => k !== 'id')] : keys;
   return ordered.slice(0, 6);

@@ -122,6 +122,31 @@ describe('record get', () => {
     expect(restCall?.method).toBe('GET');
   });
 
+  it('--json emits the FULL record, not just the default columns (regression)', async () => {
+    // Records have many fields; --json must surface all of them so an agent can
+    // read fields that aren't in the text-mode default projection. The earlier
+    // bug projected to id+name+createdAt+updatedAt only, dropping jobTitle etc.
+    scriptPersonObject(fetchStub);
+    fetchStub.reply('/rest/people', {
+      data: {
+        person: {
+          id: 'p1',
+          name: { firstName: 'Alice', lastName: 'X' },
+          jobTitle: 'CEO',
+          city: 'Helsinki',
+          createdAt: '2026-01-01T00:00:00Z',
+          updatedAt: '2026-01-02T00:00:00Z',
+        },
+      },
+    });
+
+    const { stdout } = await runCli(registerRecordCommands, ['record', 'get', 'person', 'p1', '--json']);
+    const got = JSON.parse(stdout.trim());
+    expect(got.jobTitle).toBe('CEO');
+    expect(got.city).toBe('Helsinki');
+    expect(got.name).toEqual({ firstName: 'Alice', lastName: 'X' });
+  });
+
   it('returns NOT_FOUND when REST returns 404', async () => {
     scriptPersonObject(fetchStub);
     fetchStub.reply('/rest/people', { error: 'not found' }, { status: 404, statusText: 'Not Found' });
