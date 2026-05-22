@@ -73,12 +73,26 @@ workflow  list | get <id> | versions <id> | runs <id> [...]
           version get <versionId>                trigger + steps of a version
           set-trigger <versionId> --file f.json  set a DRAFT version's trigger
           run get <runId>                        a run including per-step state
+
+record    list <object> [--filter --limit --order-by --starting-after]
+          get <object> <id> | create <object> --file f.json
+          update <object> <id> --file f.json | delete <object> <id>
+          restore <object> <id>                  un-soft-delete from recycle bin
+          bulk-upsert <object> --file f.json --key <fieldName>
+                                                 declarative reconcile by key
 ```
 
 `--object` accepts an `objectMetadataId` **or** an object name
-(`person`, `companies`, …). The `set-*` commands are **declarative and
-idempotent** — they diff the file against the workspace and issue only the
-needed create/update/delete calls, reporting `+created ~updated -deleted =unchanged`.
+(`person`, `companies`, …). The `set-*` and `record bulk-upsert` commands
+are **declarative and idempotent** — they diff the desired state against
+the workspace and issue only the needed create/update/delete calls,
+reporting `+created ~updated -deleted =unchanged`.
+
+`record` uses Twenty's REST API (`/rest/{namePlural}`) so it works
+identically against any object — standard or custom — in any workspace,
+without per-workspace code generation. The one exception is `restore`,
+which calls the GraphQL `restore<Object>` mutation (REST has no
+equivalent).
 
 ### Example: an agent setting up a view
 

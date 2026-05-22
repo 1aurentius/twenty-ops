@@ -6,6 +6,7 @@ import { VIEW_DETAIL, VIEW_FIELD, VIEW_FILTER, VIEW_SORT, VIEW_SUMMARY } from '.
 import { expectArray, loadInputFile } from '../lib/input-file.js';
 import { resolveObjectId } from '../lib/objects.js';
 import { emitList, emitOk, emitOne } from '../lib/output.js';
+import { reconcile, type ReconcileResult } from '../lib/reconcile.js';
 
 interface View {
   id: string;
@@ -177,52 +178,9 @@ export function registerViewCommands(program: Command): void {
 
 /* --------------------------------------------------------------------------
  * Declarative `set-*` subcommands: reconcile the workspace to a desired file.
+ * The reconcile() helper itself lives in lib/reconcile.ts — shared with
+ * `record bulk-upsert`.
  * ------------------------------------------------------------------------ */
-
-interface ReconcileResult {
-  created: number;
-  updated: number;
-  deleted: number;
-  unchanged: number;
-}
-
-/** Generic create/update/delete reconciliation, matching records by a key. */
-async function reconcile<C extends { id: string }>(args: {
-  desired: Record<string, unknown>[];
-  current: C[];
-  keyOfDesired: (d: Record<string, unknown>) => string;
-  keyOfCurrent: (c: C) => string;
-  changed: (cur: C, des: Record<string, unknown>) => boolean;
-  create: (des: Record<string, unknown>) => Promise<void>;
-  update: (cur: C, des: Record<string, unknown>) => Promise<void>;
-  remove: (cur: C) => Promise<void>;
-}): Promise<ReconcileResult> {
-  const result: ReconcileResult = { created: 0, updated: 0, deleted: 0, unchanged: 0 };
-  const currentByKey = new Map(args.current.map((c) => [args.keyOfCurrent(c), c]));
-  const desiredKeys = new Set<string>();
-
-  for (const des of args.desired) {
-    const key = args.keyOfDesired(des);
-    desiredKeys.add(key);
-    const cur = currentByKey.get(key);
-    if (!cur) {
-      await args.create(des);
-      result.created++;
-    } else if (args.changed(cur, des)) {
-      await args.update(cur, des);
-      result.updated++;
-    } else {
-      result.unchanged++;
-    }
-  }
-  for (const cur of args.current) {
-    if (!desiredKeys.has(args.keyOfCurrent(cur))) {
-      await args.remove(cur);
-      result.deleted++;
-    }
-  }
-  return result;
-}
 
 async function getViewFields(metadata: GraphQLClient, viewId: string): Promise<ViewField[]> {
   const data = await metadata.request<{ getViewFields: ViewField[] }>(
