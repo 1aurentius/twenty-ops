@@ -30,11 +30,7 @@ export function registerObjectCommands(program: Command): void {
       const ctx = makeCtx(cmd);
       const objects = await listObjects(ctx.metadata);
       const rows = opts.includeInactive ? objects : objects.filter((o) => o.isActive);
-      emitList(
-        rows,
-        ['id', 'nameSingular', 'namePlural', 'labelSingular', 'isCustom', 'isActive'],
-        ctx.out,
-      );
+      emitList(rows, objectColumns(ctx), ctx.out);
     });
 
   object
@@ -130,5 +126,5 @@ export function registerObjectCommands(program: Command): void {
 /** Default text-mode column projection; --json emits all OBJECT_SUMMARY fields. */
 function objectColumns(ctx: Ctx): string[] {
   if (ctx.out.json) return []; // emit all OBJECT_SUMMARY fields
-  return ['id', 'nameSingular', 'namePlural', 'labelSingular', 'labelPlural', 'icon', 'isCustom', 'isActive'];
+  return ['id', 'nameSingular', 'namePlural', 'labelSingular', 'isCustom', 'isActive'];
 }
