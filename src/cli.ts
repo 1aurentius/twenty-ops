@@ -8,6 +8,7 @@ import { registerObjectCommands } from './commands/object.js';
 import { registerRecordCommands } from './commands/record.js';
 import { registerRemoteCommands } from './commands/remote.js';
 import { registerViewCommands } from './commands/view.js';
+import { registerWebhookCommands } from './commands/webhook.js';
 import { registerWhoamiCommand } from './commands/whoami.js';
 import { registerWorkflowCommands } from './commands/workflow.js';
 
@@ -34,6 +35,7 @@ registerRecordCommands(program);
 registerObjectCommands(program);
 registerFieldCommands(program);
 registerApiKeyCommands(program);
+registerWebhookCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();

@@ -25,6 +25,9 @@ export const FIELD_SUMMARY = `id name label type isCustom isActive isNullable ob
 /** API key — workspace bearer token holder. `role` is selected as a nested id+label. */
 export const API_KEY_SUMMARY = `id name expiresAt revokedAt createdAt updatedAt role { id label }`;
 
+/** Webhook — event subscription. `secret` is server-generated unless provided on create. */
+export const WEBHOOK_SUMMARY = `id targetUrl operations description secret createdAt updatedAt`;
+
 /** A v4 UUID — used to pre-fill `id` fields the API leaves optional. */
 export function uuid(): string {
   return crypto.randomUUID();
