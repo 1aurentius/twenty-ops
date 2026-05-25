@@ -19,14 +19,14 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `whoami`                      | yes     | ✓    | ✓           |           |
 | `view` (CRUD)                 | yes     | ✓    | ✓           | ✓         |
 | `view set-fields`             | yes     | ✓    | ✓           |           |
-| `view set-filters`            | yes     | ✓    |             |           |
-| `view set-sorts`              | yes     | ✓    |             |           |
+| `view set-filters`            | yes     | ✓    | ✓           |           |
+| `view set-sorts`              | yes     | ✓    | ✓           |           |
 | `nav` (CRUD)                  | yes     | ✓    | ✓           | ✓         |
 | `workflow` (record CRUD)      | yes     | ✓    | ✓           | ✓         |
 | `workflow set-trigger`        | yes     | ✓    | ✓           | ✓         |
 | `workflow versions/runs`      | yes     | ✓    |             |           |
 | `doctor` (self-check)         | yes     | ✓    | ✓           | n/a       |
-| `record` (CRUD + bulk-upsert) | yes     | ✓    | ✓           |           |
+| `record` (CRUD + bulk-upsert) | yes     | ✓    | ✓           | ✓         |
 | `object` (CRUD)               | yes     | ✓    | ✓           |           |
 | `field` (CRUD)                | yes     | ✓    | ✓           |           |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |

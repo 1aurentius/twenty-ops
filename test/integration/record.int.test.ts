@@ -1,6 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 
 import { EXIT } from '../../src/api/errors.js';
+import { registerFieldCommands } from '../../src/commands/field.js';
+import { registerObjectCommands } from '../../src/commands/object.js';
 import { registerRecordCommands } from '../../src/commands/record.js';
 import { runCli } from '../helpers/cli-harness.js';
 import { INTEGRATION, REMOTE, assertLocalRemote, tag } from '../helpers/integration-setup.js';
@@ -8,6 +10,10 @@ import { INTEGRATION, REMOTE, assertLocalRemote, tag } from '../helpers/integrat
 const TAG = `rec-int-${tag()}`;
 const runRec = (...args: string[]) =>
   runCli(registerRecordCommands, ['--remote', REMOTE, 'record', ...args]);
+const runObj = (...args: string[]) =>
+  runCli(registerObjectCommands, ['--remote', REMOTE, 'object', ...args]);
+const runField = (...args: string[]) =>
+  runCli(registerFieldCommands, ['--remote', REMOTE, 'field', ...args]);
 
 describe.skipIf(!INTEGRATION)('record integration (person)', () => {
   const cleanup: string[] = [];
@@ -67,5 +73,77 @@ describe.skipIf(!INTEGRATION)('record integration (person)', () => {
       (e: unknown) => e,
     );
     expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
+  });
+});
+
+/**
+ * Bulk-upsert lifecycle — runs against a throwaway custom object so the
+ * "page through all current records" reconcile loop is isolated from any
+ * other state in the workspace.
+ */
+describe.skipIf(!INTEGRATION)('record bulk-upsert lifecycle (custom object)', () => {
+  const TAG_OBJ = `bulk${tag()}`;
+  const SINGULAR = `${TAG_OBJ}Row`;
+  const PLURAL = `${TAG_OBJ}Rows`;
+  let objectId = '';
+
+  beforeAll(async () => {
+    assertLocalRemote();
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'bulk-int-'));
+
+    const objFile = join(dir, 'object.json');
+    writeFileSync(objFile, JSON.stringify({
+      nameSingular: SINGULAR,
+      namePlural: PLURAL,
+      labelSingular: 'Bulk Row',
+      labelPlural: 'Bulk Rows',
+    }));
+    const created = await runObj('create', '--file', objFile, '--json');
+    objectId = (JSON.parse(created.stdout.trim()) as { id: string }).id;
+
+    // Add a `key` TEXT field that bulk-upsert can match on.
+    const fieldFile = join(dir, 'field.json');
+    writeFileSync(fieldFile, JSON.stringify({
+      name: 'key',
+      label: 'Key',
+      type: 'TEXT',
+    }));
+    await runField('create', '--object', SINGULAR, '--file', fieldFile);
+  });
+
+  afterAll(async () => {
+    if (objectId) await runObj('delete', objectId).catch(() => undefined);
+  });
+
+  it('first upsert creates all rows, second upsert reports the +/~/-/= deltas', async () => {
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'bulk-int-'));
+
+    // First file — three rows
+    const file1 = join(dir, 'desired1.json');
+    writeFileSync(file1, JSON.stringify([
+      { key: 'a', name: 'Alpha' },
+      { key: 'b', name: 'Beta' },
+      { key: 'c', name: 'Gamma' },
+    ]));
+
+    const r1 = await runRec('bulk-upsert', SINGULAR, '--file', file1, '--key', 'key', '--json');
+    expect(JSON.parse(r1.stdout.trim())).toMatchObject({ created: 3, updated: 0, deleted: 0, unchanged: 0 });
+
+    // Second file — a unchanged, b renamed, c dropped, d added
+    const file2 = join(dir, 'desired2.json');
+    writeFileSync(file2, JSON.stringify([
+      { key: 'a', name: 'Alpha' },          // unchanged
+      { key: 'b', name: 'Beta (renamed)' }, // updated
+      { key: 'd', name: 'Delta' },           // created
+    ]));
+
+    const r2 = await runRec('bulk-upsert', SINGULAR, '--file', file2, '--key', 'key', '--json');
+    expect(JSON.parse(r2.stdout.trim())).toMatchObject({ created: 1, updated: 1, deleted: 1, unchanged: 1 });
   });
 });

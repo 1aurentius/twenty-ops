@@ -64,6 +64,48 @@ describe.skipIf(!INTEGRATION)('view integration', () => {
     expect(JSON.parse(r2.stdout.trim())).toMatchObject({ created: 0, updated: 0, deleted: 0, unchanged: 1 });
   });
 
+  it('set-filters reconciles to the desired filter set, idempotently', async () => {
+    const created = await runView('create', '--object', 'person', '--name', `${TAG}-filters`, '--json');
+    const viewId = (JSON.parse(created.stdout.trim()) as { id: string }).id;
+    cleanup.push(viewId);
+
+    const fieldId = await firstFieldId('person', 'jobTitle');
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const file = join(mkdtempSync(join(tmpdir(), 'view-int-')), 'filters.json');
+    writeFileSync(file, JSON.stringify([
+      { fieldMetadataId: fieldId, operand: 'IS', value: 'CEO' },
+    ]));
+
+    const r1 = await runView('set-filters', viewId, '--file', file, '--json');
+    expect(JSON.parse(r1.stdout.trim())).toMatchObject({ what: 'filters', created: 1, updated: 0, deleted: 0 });
+
+    const r2 = await runView('set-filters', viewId, '--file', file, '--json');
+    expect(JSON.parse(r2.stdout.trim())).toMatchObject({ created: 0, updated: 0, deleted: 0, unchanged: 1 });
+  });
+
+  it('set-sorts reconciles to the desired sort set, idempotently', async () => {
+    const created = await runView('create', '--object', 'person', '--name', `${TAG}-sorts`, '--json');
+    const viewId = (JSON.parse(created.stdout.trim()) as { id: string }).id;
+    cleanup.push(viewId);
+
+    const fieldId = await firstFieldId('person', 'createdAt');
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const file = join(mkdtempSync(join(tmpdir(), 'view-int-')), 'sorts.json');
+    writeFileSync(file, JSON.stringify([
+      { fieldMetadataId: fieldId, direction: 'DESC' },
+    ]));
+
+    const r1 = await runView('set-sorts', viewId, '--file', file, '--json');
+    expect(JSON.parse(r1.stdout.trim())).toMatchObject({ what: 'sorts', created: 1, updated: 0, deleted: 0 });
+
+    const r2 = await runView('set-sorts', viewId, '--file', file, '--json');
+    expect(JSON.parse(r2.stdout.trim())).toMatchObject({ created: 0, updated: 0, deleted: 0, unchanged: 1 });
+  });
+
   it('returns NOT_FOUND for a bogus view id', async () => {
     const err = await runView('get', '00000000-0000-4000-8000-000000000000').catch((e: unknown) => e);
     expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
