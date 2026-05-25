@@ -16,6 +16,9 @@ export const VIEW_DETAIL = `
 
 export const NAV_ITEM = `id type name icon viewId folderId link color position`;
 
+/** Object metadata — the schema-as-code identity record for an object type. */
+export const OBJECT_SUMMARY = `id nameSingular namePlural labelSingular labelPlural icon isCustom isActive`;
+
 /** A v4 UUID — used to pre-fill `id` fields the API leaves optional. */
 export function uuid(): string {
   return crypto.randomUUID();

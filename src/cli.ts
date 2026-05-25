@@ -2,6 +2,7 @@ import { Command, CommanderError } from 'commander';
 import { CliError, EXIT } from './api/errors.js';
 import { registerDoctorCommand } from './commands/doctor.js';
 import { registerNavCommands } from './commands/nav.js';
+import { registerObjectCommands } from './commands/object.js';
 import { registerRecordCommands } from './commands/record.js';
 import { registerRemoteCommands } from './commands/remote.js';
 import { registerViewCommands } from './commands/view.js';
@@ -28,6 +29,7 @@ registerViewCommands(program);
 registerNavCommands(program);
 registerWorkflowCommands(program);
 registerRecordCommands(program);
+registerObjectCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();

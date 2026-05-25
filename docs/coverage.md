@@ -27,6 +27,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `workflow versions/runs`      | yes     | ✓    |             |           |
 | `doctor` (self-check)         | yes     | ✓    | ✓           | n/a       |
 | `record` (CRUD + bulk-upsert) | yes     | ✓    | ✓           |           |
+| `object` (CRUD)               | yes     | ✓    | ✓           |           |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 | **Framework: seed automation**| n/a     | n/a  | ✓ (verified) | n/a      |
@@ -38,7 +39,6 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | API keys                            | Stable mutations            | 3     |
 | Webhooks                            | Stable mutations            | 3     |
 | Settings (read)                     | `currentWorkspace`/etc      | 3     |
-| Object metadata editing             | Stable mutations            | 4     |
 | Field metadata editing              | Stable mutations            | 4     |
 | Members + roles + permissions       | Stable, complex             | 5     |
 | Workflow steps + activation         | Blocked on Twenty image     | 6     |

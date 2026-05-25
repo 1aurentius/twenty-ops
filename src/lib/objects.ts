@@ -1,12 +1,15 @@
 import { CliError, EXIT } from '../api/errors.js';
 import type { GraphQLClient } from '../api/graphql-client.js';
-import { isUuid } from './gql.js';
+import { OBJECT_SUMMARY, isUuid } from './gql.js';
 
-interface ObjectNode {
+export interface ObjectNode {
   id: string;
   nameSingular: string;
   namePlural: string;
   labelSingular: string;
+  labelPlural: string;
+  icon: string | null;
+  isCustom: boolean;
   isActive: boolean;
 }
 
@@ -17,7 +20,7 @@ interface ObjectsResult {
 const OBJECTS_QUERY = `
   query Objects($paging: CursorPaging!, $filter: ObjectFilter!) {
     objects(paging: $paging, filter: $filter) {
-      edges { node { id nameSingular namePlural labelSingular isActive } }
+      edges { node { ${OBJECT_SUMMARY} } }
     }
   }
 `;
