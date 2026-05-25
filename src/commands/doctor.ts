@@ -20,8 +20,8 @@ import { emitOk } from '../lib/output.js';
 export function registerDoctorCommand(program: Command): void {
   program
     .command('doctor')
-    .description('run a self-check against the configured remote (remote + auth + schema + view round-trip)')
-    .option('--objects-list', 'also probe object metadata listing (proxy for the records check)', false)
+    .description('run a self-check against the configured remote (remote + auth + schema + view + records round-trip)')
+    .option('--objects-list', '(deprecated, accepted as a no-op; the records-round-trip step supersedes it)', false)
     .action(async (opts: { objectsList?: boolean }, cmd: Command) => {
       const ctx = makeCtx(cmd);
       const runner = new StepRunner(ctx);
@@ -87,15 +87,24 @@ export function registerDoctorCommand(program: Command): void {
         }
       });
 
-      if (opts.objectsList) {
-        await runner.run('objects-list', 'list objects via metadata API', async () => {
-          const data = await ctx.metadata.request<{ objects: { edges: { node: { id: string } }[] } }>(
-            `query { objects(paging:{first:1}, filter:{}) { edges { node { id } } } }`,
+      await runner.run('records-round-trip', 'list `person` records via REST', async () => {
+        const payload = await ctx.rest.get<{ data?: { people?: unknown[] } }>(
+          '/people',
+          { limit: 1 },
+        );
+        const rows = payload?.data?.people;
+        if (!Array.isArray(rows)) {
+          throw new CliError(
+            `unexpected response from /rest/people: ${JSON.stringify(payload).slice(0, 200)}`,
+            EXIT.API,
           );
-          const n = data.objects.edges.length;
-          return `${n} object${n === 1 ? '' : 's'} reachable`;
-        });
-      }
+        }
+        return `${rows.length} record${rows.length === 1 ? '' : 's'} reachable via REST`;
+      });
+
+      // --objects-list is now superseded by records-round-trip — accept it as a
+      // no-op for one release to avoid breaking pre-v0.4 callers / scripts.
+      void opts.objectsList;
 
       runner.finish();
     });

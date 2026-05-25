@@ -92,6 +92,8 @@ function scriptHappyPath(): void {
   });
   // deleteView
   fetchStub.reply('/metadata', { data: { deleteView: true } });
+  // step 5: records round-trip — REST GET /rest/people?limit=1
+  fetchStub.reply('/rest/people', { data: { people: [] } });
 }
 
 describe('doctor command', () => {
@@ -104,6 +106,7 @@ describe('doctor command', () => {
     expect(stdout).toContain('[OK  ] whoami returns a workspace');
     expect(stdout).toContain('[OK  ] live schema matches the committed snapshot');
     expect(stdout).toContain('[OK  ] create-read-delete a throwaway view on `person`');
+    expect(stdout).toContain('[OK  ] list `person` records via REST');
     expect(stdout).toContain('doctor: OK');
     expect(stderr).toBe('');
 
@@ -128,7 +131,9 @@ describe('doctor command', () => {
     expect(summary.ok).toBe(true);
     expect(summary.remote).toBe('test');
     expect(summary.apiUrl).toBe('http://localhost:3001');
-    expect(summary.steps.map((s) => s.key)).toEqual(['remote', 'whoami', 'schema-drift', 'view-round-trip']);
+    expect(summary.steps.map((s) => s.key)).toEqual([
+      'remote', 'whoami', 'schema-drift', 'view-round-trip', 'records-round-trip',
+    ]);
     expect(summary.steps.every((s) => s.status === 'ok')).toBe(true);
   });
 
@@ -159,15 +164,12 @@ describe('doctor command', () => {
     expect((err as { exitCode?: number }).exitCode).toBe(EXIT.API);
   });
 
-  it('--objects-list adds a fifth probe', async () => {
+  it('--objects-list is accepted as a no-op (deprecated; records-round-trip supersedes it)', async () => {
     scriptHappyPath();
-    // step 5: objects-list query
-    fetchStub.reply('/metadata', {
-      data: { objects: { edges: [{ node: { id: 'obj-1' } }] } },
-    });
-
     const { stdout } = await runCli(registerDoctorCommand, ['doctor', '--objects-list']);
-    expect(stdout).toContain('[OK  ] list objects via metadata API');
+    expect(stdout).toContain('[OK  ] list `person` records via REST');
+    // Old step header is gone — the flag is now a no-op.
+    expect(stdout).not.toContain('list objects via metadata API');
   });
 
   it('--quiet suppresses OK lines but emits the verdict', async () => {
