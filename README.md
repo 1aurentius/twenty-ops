@@ -54,7 +54,19 @@ with the `TWENTY_API_URL` + `TWENTY_API_KEY` environment variables.
 ```
 remote    list | current | add <name> --url --key | use <name> | remove <name>
 whoami    show the connected workspace
-doctor    end-to-end self-check (remote + auth + schema drift + view round-trip)
+doctor    end-to-end self-check (remote + auth + schema + view + records round-trip)
+settings  get                                    dump currentWorkspace config
+
+api-key   list [--include-revoked]
+          get <id>
+          create --name [--expires-at <iso>] [--role <id|label>]
+                                                  prints {token, apiKey} — store the
+                                                  token now, it cannot be re-fetched
+          revoke <id> | rotate <id> [--expires-at]
+
+webhook   list | get <id>
+          create --target-url <url> --operations <list> [--description] [--secret]
+          update <id> [...] | delete <id>
 
 view      list [--object <ref>] [--type <T>]   list views
           get <viewId>                          view + its fields/filters/sorts
@@ -80,6 +92,12 @@ record    list <object> [--filter --limit --order-by --starting-after]
           restore <object> <id>                  un-soft-delete from recycle bin
           bulk-upsert <object> --file f.json --key <fieldName>
                                                  declarative reconcile by key
+
+object    list [--include-inactive] | get <ref>
+          create --file f.json | update <ref> --file f.json | delete <ref>
+
+field     list --object <ref> [--include-inactive] | get <id>
+          create --object <ref> --file f.json | update <id> --file f.json | delete <id>
 ```
 
 `--object` accepts an `objectMetadataId` **or** an object name
@@ -93,6 +111,34 @@ identically against any object — standard or custom — in any workspace,
 without per-workspace code generation. The one exception is `restore`,
 which calls the GraphQL `restore<Object>` mutation (REST has no
 equivalent).
+
+### Schema-as-code
+
+`object` and `field` let an agent stand up a custom CRM end-to-end —
+no UI clicks required. JSON/YAML files are the source of truth; the
+file's contents pass through to Twenty verbatim so per-type quirks
+(field `type` enum, `defaultValue`/`options` shapes) live with the
+input.
+
+```bash
+# Define a custom object
+cat > project.json <<'EOF'
+{ "nameSingular": "project", "namePlural": "projects",
+  "labelSingular": "Project", "labelPlural": "Projects",
+  "icon": "IconBriefcase" }
+EOF
+twenty-ops object create --file project.json --json
+
+# Populate it with fields
+cat > status.json <<'EOF'
+{ "name": "status", "label": "Status", "type": "SELECT",
+  "options": [
+    { "value": "ACTIVE", "label": "Active", "color": "green", "position": 0 },
+    { "value": "DONE",   "label": "Done",   "color": "gray",  "position": 1 }
+  ] }
+EOF
+twenty-ops field create --object project --file status.json
+```
 
 ### Example: an agent setting up a view
 
