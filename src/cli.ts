@@ -1,5 +1,6 @@
 import { Command, CommanderError } from 'commander';
 import { CliError, EXIT } from './api/errors.js';
+import { registerApiKeyCommands } from './commands/api-key.js';
 import { registerDoctorCommand } from './commands/doctor.js';
 import { registerFieldCommands } from './commands/field.js';
 import { registerNavCommands } from './commands/nav.js';
@@ -32,6 +33,7 @@ registerWorkflowCommands(program);
 registerRecordCommands(program);
 registerObjectCommands(program);
 registerFieldCommands(program);
+registerApiKeyCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();

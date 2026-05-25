@@ -22,6 +22,9 @@ export const OBJECT_SUMMARY = `id nameSingular namePlural labelSingular labelPlu
 /** Field metadata — schema-as-code identity record for a field on an object. */
 export const FIELD_SUMMARY = `id name label type isCustom isActive isNullable objectMetadataId description icon`;
 
+/** API key — workspace bearer token holder. `role` is selected as a nested id+label. */
+export const API_KEY_SUMMARY = `id name expiresAt revokedAt createdAt updatedAt role { id label }`;
+
 /** A v4 UUID — used to pre-fill `id` fields the API leaves optional. */
 export function uuid(): string {
   return crypto.randomUUID();
