@@ -32,6 +32,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `api-key` (CRUD + rotate)     | yes     | ✓    | ✓           |           |
 | `webhook` (CRUD)              | yes     | ✓    | ✓           |           |
 | `settings get` (read)         | yes     | ✓    | ✓           | n/a       |
+| `role` (CRUD)                 | yes     | ✓    | ✓           |           |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 | **Framework: seed automation**| n/a     | n/a  | ✓ (verified) | n/a      |

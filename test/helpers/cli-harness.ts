@@ -38,6 +38,14 @@ export async function runCli(
       .option('-q, --quiet');
     register(program);
     await program.parseAsync(['node', 'cli', ...args]);
+  } catch (err) {
+    // Attach the in-process stdout/stderr to the thrown error so tests can
+    // assert against writes that happened before the action threw. Without
+    // this, stderr written immediately before a CliError is lost.
+    const e = err as { stdout?: string; stderr?: string };
+    e.stdout = stdoutChunks.join('');
+    e.stderr = stderrChunks.join('');
+    throw err;
   } finally {
     spyOut.mockRestore();
     spyErr.mockRestore();

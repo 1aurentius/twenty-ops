@@ -7,6 +7,7 @@ import { registerNavCommands } from './commands/nav.js';
 import { registerObjectCommands } from './commands/object.js';
 import { registerRecordCommands } from './commands/record.js';
 import { registerRemoteCommands } from './commands/remote.js';
+import { registerRoleCommands } from './commands/role.js';
 import { registerSettingsCommands } from './commands/settings.js';
 import { registerViewCommands } from './commands/view.js';
 import { registerWebhookCommands } from './commands/webhook.js';
@@ -38,6 +39,7 @@ registerFieldCommands(program);
 registerApiKeyCommands(program);
 registerWebhookCommands(program);
 registerSettingsCommands(program);
+registerRoleCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();
