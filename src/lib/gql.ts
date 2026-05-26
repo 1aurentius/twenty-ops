@@ -28,6 +28,9 @@ export const API_KEY_SUMMARY = `id name expiresAt revokedAt createdAt updatedAt 
 /** Webhook — event subscription. `secret` is server-generated unless provided on create. */
 export const WEBHOOK_SUMMARY = `id targetUrl operations description secret createdAt updatedAt`;
 
+/** Role — RBAC identity record. */
+export const ROLE_SUMMARY = `id label description icon canBeAssignedToUsers canBeAssignedToApiKeys isEditable`;
+
 /** A v4 UUID — used to pre-fill `id` fields the API leaves optional. */
 export function uuid(): string {
   return crypto.randomUUID();

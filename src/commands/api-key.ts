@@ -3,6 +3,7 @@ import { CliError, EXIT } from '../api/errors.js';
 import { makeCtx, type Ctx } from '../lib/context.js';
 import { API_KEY_SUMMARY } from '../lib/gql.js';
 import { emitList, emitOk, emitOne } from '../lib/output.js';
+import { resolveRoleId } from '../lib/roles.js';
 
 interface ApiKeyNode {
   id: string;
@@ -12,12 +13,6 @@ interface ApiKeyNode {
   createdAt: string;
   updatedAt: string;
   role: { id: string; label: string } | null;
-}
-
-interface Role {
-  id: string;
-  label: string;
-  canBeAssignedToApiKeys: boolean;
 }
 
 /**
@@ -154,30 +149,5 @@ function defaultExpiresAt(): string {
   return new Date(Date.now() + FIFTY_YEARS_MS).toISOString();
 }
 
-/**
- * Resolves `--role` (label or id) to a role id. With no flag, picks any role
- * that can be assigned to API keys (matches the seed script's admin pick).
- */
-async function resolveRoleId(ctx: Ctx, ref: string | undefined): Promise<string> {
-  const data = await ctx.metadata.request<{ getRoles: Role[] }>(
-    `query { getRoles { id label canBeAssignedToApiKeys } }`,
-  );
-  if (!ref) {
-    const assignable = data.getRoles.find((r) => r.canBeAssignedToApiKeys);
-    if (!assignable) {
-      throw new CliError(
-        `no role available for API keys — set --role explicitly`,
-        EXIT.API,
-      );
-    }
-    return assignable.id;
-  }
-  const match = data.getRoles.find((r) => r.id === ref || r.label === ref);
-  if (!match) {
-    throw new CliError(
-      `role "${ref}" not found — available: ${data.getRoles.map((r) => r.label).join(', ')}`,
-      EXIT.NOT_FOUND,
-    );
-  }
-  return match.id;
-}
+// `resolveRoleId` lifted to `src/lib/roles.ts` so role/member/permission
+// commands can reuse it. Imported above.
