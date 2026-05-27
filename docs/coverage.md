@@ -35,7 +35,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `role` (CRUD)                 | yes     | ✓    | ✓           |           |
 | `member` (CRUD + settings)    | yes     | ✓    | ✓           |           |
 | `invitation` (list/send/resend/revoke) | yes  | ✓ | ✓ (read + AUTH gate; mutations user-scoped) |  |
-| `permission show/set-object/set-field/set-flag` | partial | ✓ | ✓     |           |
+| `permission` (show / set-* / apply)           | yes     | ✓ | ✓     |           |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 | **Framework: seed automation**| n/a     | n/a  | ✓ (verified) | n/a      |

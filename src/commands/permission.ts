@@ -2,6 +2,7 @@ import type { Command } from 'commander';
 import { CliError, EXIT } from '../api/errors.js';
 import { makeCtx, type Ctx } from '../lib/context.js';
 import { ROLE_PERMISSIONS } from '../lib/gql.js';
+import { loadInputFile } from '../lib/input-file.js';
 import { resolveObjectId } from '../lib/objects.js';
 import { resolveRoleId } from '../lib/roles.js';
 import { emitOk, emitOne } from '../lib/output.js';
@@ -209,6 +210,178 @@ export function registerPermissionCommands(program: Command): void {
         );
       },
     );
+
+  permission
+    .command('apply')
+    .description('declarative bulk apply: replace a role\'s permissions to match a JSON/YAML file (- for stdin)')
+    .requiredOption('--role <ref>', 'role id or label')
+    .requiredOption(
+      '--file <path>',
+      '{ objects?: [{object, read?, write?, softDelete?, destroy?}], ' +
+        'fields?: [{object, field, read?, write?}], flags?: [string] }',
+    )
+    .action(async (opts: { role: string; file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const spec = loadInputFile<{
+        objects?: { object: string; read?: boolean; write?: boolean; softDelete?: boolean; destroy?: boolean }[];
+        fields?: { object: string; field: string; read?: boolean; write?: boolean }[];
+        flags?: string[];
+      }>(opts.file);
+      if (Array.isArray(spec) || typeof spec !== 'object' || spec === null) {
+        throw new CliError(`${opts.file} must be a JSON/YAML object`, EXIT.USAGE);
+      }
+      const role = await fetchRoleWithPermissions(ctx, opts.role);
+
+      // Build delta for each category by comparing desired vs current. Each
+      // category gets a single upsert call (Twenty's *replace-the-list*
+      // semantics — see set-* notes above).
+      const summary: {
+        roleId: string;
+        objects: Delta;
+        fields: Delta;
+        flags: Delta;
+      } = {
+        roleId: role.id,
+        objects: { created: 0, updated: 0, deleted: 0, unchanged: 0 },
+        fields: { created: 0, updated: 0, deleted: 0, unchanged: 0 },
+        flags: { created: 0, updated: 0, deleted: 0, unchanged: 0 },
+      };
+
+      if (spec.objects !== undefined) {
+        const desired = await Promise.all(
+          (spec.objects ?? []).map(async (d) => {
+            const objectMetadataId = await resolveObjectId(ctx.metadata, d.object);
+            return pruneUndefined({
+              objectMetadataId,
+              canReadObjectRecords: d.read,
+              canUpdateObjectRecords: d.write,
+              canSoftDeleteObjectRecords: d.softDelete,
+              canDestroyObjectRecords: d.destroy,
+            });
+          }),
+        );
+        summary.objects = computeDelta(
+          role.objectPermissions.map((p) => ({ ...p })),
+          desired,
+          (row) => String(row.objectMetadataId),
+        );
+        if (desired.length > 0) {
+          await ctx.metadata.request(
+            `mutation($input: UpsertObjectPermissionsInput!) {
+               upsertObjectPermissions(upsertObjectPermissionsInput: $input) { objectMetadataId }
+             }`,
+            { input: { roleId: role.id, objectPermissions: desired } },
+          );
+        }
+      }
+
+      if (spec.fields !== undefined) {
+        const desired = await Promise.all(
+          (spec.fields ?? []).map(async (d) => {
+            const objectMetadataId = await resolveObjectId(ctx.metadata, d.object);
+            return pruneUndefined({
+              objectMetadataId,
+              fieldMetadataId: d.field,
+              canReadFieldValue: d.read,
+              canUpdateFieldValue: d.write,
+            });
+          }),
+        );
+        summary.fields = computeDelta(
+          role.fieldPermissions.map((p) => ({
+            objectMetadataId: p.objectMetadataId,
+            fieldMetadataId: p.fieldMetadataId,
+            canReadFieldValue: p.canReadFieldValue,
+            canUpdateFieldValue: p.canUpdateFieldValue,
+          })),
+          desired,
+          (row) => `${String(row.objectMetadataId)}::${String(row.fieldMetadataId)}`,
+        );
+        if (desired.length > 0) {
+          await ctx.metadata.request(
+            `mutation($input: UpsertFieldPermissionsInput!) {
+               upsertFieldPermissions(upsertFieldPermissionsInput: $input) { id }
+             }`,
+            { input: { roleId: role.id, fieldPermissions: desired } },
+          );
+        }
+      }
+
+      if (spec.flags !== undefined) {
+        const desired = spec.flags ?? [];
+        summary.flags = computeDelta(
+          role.permissionFlags.map((f) => ({ flag: f.flag })),
+          desired.map((f) => ({ flag: f })),
+          (row) => String(row.flag),
+        );
+        await ctx.metadata.request(
+          `mutation($input: UpsertPermissionFlagsInput!) {
+             upsertPermissionFlags(upsertPermissionFlagsInput: $input) { id flag }
+           }`,
+          { input: { roleId: role.id, permissionFlagKeys: desired } },
+        );
+      }
+
+      const verdict =
+        `applied permissions to role ${role.id}: ` +
+        `objects +${summary.objects.created} ~${summary.objects.updated} -${summary.objects.deleted} =${summary.objects.unchanged}; ` +
+        `fields +${summary.fields.created} ~${summary.fields.updated} -${summary.fields.deleted} =${summary.fields.unchanged}; ` +
+        `flags +${summary.flags.created} ~${summary.flags.updated} -${summary.flags.deleted} =${summary.flags.unchanged}`;
+      emitOk(verdict, summary as unknown as Record<string, unknown>, ctx.out);
+    });
+}
+
+/* --------------------------------------------------------------------------
+ * `permission apply` helpers (kept private; only this command needs them).
+ * ------------------------------------------------------------------------ */
+
+interface Delta {
+  created: number;
+  updated: number;
+  deleted: number;
+  unchanged: number;
+}
+
+/**
+ * Compute the delta between current and desired rows, keyed by `key()`.
+ * No callbacks fire — Twenty's upsert-mutations are a single wire call per
+ * category that REPLACE the list, so the deltas are computed for reporting
+ * only.
+ */
+function computeDelta<T extends Record<string, unknown>>(
+  current: T[],
+  desired: T[],
+  key: (r: T) => string,
+): Delta {
+  const result: Delta = { created: 0, updated: 0, deleted: 0, unchanged: 0 };
+  const currentByKey = new Map(current.map((r) => [key(r), r]));
+  const desiredKeys = new Set<string>();
+  for (const d of desired) {
+    const k = key(d);
+    desiredKeys.add(k);
+    const cur = currentByKey.get(k);
+    if (!cur) result.created++;
+    else if (rowChanged(cur, d)) result.updated++;
+    else result.unchanged++;
+  }
+  for (const k of currentByKey.keys()) {
+    if (!desiredKeys.has(k)) result.deleted++;
+  }
+  return result;
+}
+
+function rowChanged(a: Record<string, unknown>, b: Record<string, unknown>): boolean {
+  // Compare every key on `b` (the desired); `a` may have extra fields (like
+  // role-scoped sub-aggregates) that we don't drive.
+  for (const k of Object.keys(b)) {
+    if (k === 'id') continue;
+    if (JSON.stringify(a[k]) !== JSON.stringify(b[k])) return true;
+  }
+  return false;
+}
+
+function pruneUndefined(obj: Record<string, unknown>): Record<string, unknown> {
+  return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
 }
 
 async function fetchRoleWithPermissions(ctx: Ctx, ref: string): Promise<RoleWithPermissions> {

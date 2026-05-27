@@ -79,4 +79,30 @@ describe.skipIf(!INTEGRATION)('permission integration', () => {
     row = JSON.parse(show.stdout.trim()) as { permissionFlags: { flag: string }[] };
     expect(row.permissionFlags.map((f) => f.flag)).not.toContain('WORKFLOWS');
   });
+
+  it('apply: idempotent — re-running the same file shows all unchanged', async () => {
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'perm-int-apply-'));
+    const file = join(dir, 'spec.json');
+    writeFileSync(file, JSON.stringify({
+      objects: [{ object: objectSingular, read: true }],
+      flags: ['VIEWS'],
+    }));
+
+    // First apply — at least the flag creates (current may carry over from prior tests)
+    const r1 = await runPerm('apply', '--role', roleId, '--file', file, '--json');
+    const s1 = JSON.parse(r1.stdout.trim()) as { flags: { created: number; unchanged: number } };
+    expect(s1.flags.created + s1.flags.unchanged).toBeGreaterThanOrEqual(1);
+
+    // Second apply — everything must be unchanged
+    const r2 = await runPerm('apply', '--role', roleId, '--file', file, '--json');
+    const s2 = JSON.parse(r2.stdout.trim()) as {
+      objects: { created: number; updated: number; deleted: number; unchanged: number };
+      flags: { created: number; updated: number; deleted: number; unchanged: number };
+    };
+    expect(s2.objects).toMatchObject({ created: 0, updated: 0, deleted: 0 });
+    expect(s2.flags).toMatchObject({ created: 0, updated: 0, deleted: 0 });
+  });
 });

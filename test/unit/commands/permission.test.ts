@@ -191,6 +191,92 @@ describe('permission set-field', () => {
   });
 });
 
+describe('permission apply', () => {
+  it('replaces objects + fields + flags with the desired set and reports deltas', async () => {
+    fetchStub.reply('/metadata', { data: { getRoles: ROLE_FOR_RESOLVE } });
+    fetchStub.reply('/metadata', { data: { getRoles: [ROLE] } });
+    // resolveObjectId for person + company (apply iterates desired objects/fields)
+    fetchStub.reply('/metadata', {
+      data: {
+        objects: {
+          edges: [
+            { node: { id: 'obj-person', nameSingular: 'person', namePlural: 'people', labelSingular: 'P', labelPlural: 'P', icon: null, isCustom: false, isActive: true } },
+            { node: { id: 'obj-company', nameSingular: 'company', namePlural: 'companies', labelSingular: 'C', labelPlural: 'C', icon: null, isCustom: false, isActive: true } },
+          ],
+        },
+      },
+    });
+    fetchStub.reply('/metadata', { data: { upsertObjectPermissions: { objectMetadataId: 'obj-company' } } });
+    fetchStub.reply('/metadata', {
+      data: {
+        objects: {
+          edges: [
+            { node: { id: 'obj-person', nameSingular: 'person', namePlural: 'people', labelSingular: 'P', labelPlural: 'P', icon: null, isCustom: false, isActive: true } },
+          ],
+        },
+      },
+    });
+    fetchStub.reply('/metadata', { data: { upsertFieldPermissions: [{ id: 'fp-1' }] } });
+    fetchStub.reply('/metadata', { data: { upsertPermissionFlags: [] } });
+
+    const file = join(HOME.current, 'apply.json');
+    writeFileSync(file, JSON.stringify({
+      // current Member has: person read=true. Desired: company read=true (new) — person disappears (-1)
+      objects: [{ object: 'company', read: true }],
+      // current Member has: person/jobTitle read=true. Desired: person/jobTitle read=true (=unchanged)
+      fields: [{ object: 'person', field: 'fld-jobTitle', read: true }],
+      // current Member has: WORKFLOWS. Desired: DATA_MODEL (new) — WORKFLOWS disappears
+      flags: ['DATA_MODEL'],
+    }));
+
+    const { stdout } = await runCli(registerPermissionCommands, [
+      'permission', 'apply', '--role', 'Member', '--file', file, '--json',
+    ]);
+    const summary = JSON.parse(stdout.trim()) as {
+      roleId: string;
+      objects: { created: number; updated: number; deleted: number; unchanged: number };
+      fields: { created: number; updated: number; deleted: number; unchanged: number };
+      flags: { created: number; updated: number; deleted: number; unchanged: number };
+    };
+    expect(summary.roleId).toBe('role-member');
+    expect(summary.objects).toEqual({ created: 1, updated: 0, deleted: 1, unchanged: 0 });
+    expect(summary.fields).toEqual({ created: 0, updated: 0, deleted: 0, unchanged: 1 });
+    expect(summary.flags).toEqual({ created: 1, updated: 0, deleted: 1, unchanged: 0 });
+  });
+
+  it('omitting a category in the file leaves that category untouched (no mutation fired)', async () => {
+    fetchStub.reply('/metadata', { data: { getRoles: ROLE_FOR_RESOLVE } });
+    fetchStub.reply('/metadata', { data: { getRoles: [ROLE] } });
+    fetchStub.reply('/metadata', { data: { upsertPermissionFlags: [{ id: 'pf-1', flag: 'WORKFLOWS' }] } });
+
+    const file = join(HOME.current, 'apply.json');
+    writeFileSync(file, JSON.stringify({ flags: ['WORKFLOWS'] })); // objects + fields omitted
+
+    await runCli(registerPermissionCommands, [
+      'permission', 'apply', '--role', 'Member', '--file', file,
+    ]);
+
+    // Only the flags upsert should have fired — no object or field upsert
+    const objectCall = fetchStub.calls.find((c) =>
+      (c.body as { query?: string } | undefined)?.query?.includes('upsertObjectPermissions'),
+    );
+    const fieldCall = fetchStub.calls.find((c) =>
+      (c.body as { query?: string } | undefined)?.query?.includes('upsertFieldPermissions'),
+    );
+    expect(objectCall).toBeUndefined();
+    expect(fieldCall).toBeUndefined();
+  });
+
+  it('USAGE error when the file is an array', async () => {
+    const file = join(HOME.current, 'bad.json');
+    writeFileSync(file, JSON.stringify([{ flags: ['WORKFLOWS'] }]));
+    const err = await runCli(registerPermissionCommands, [
+      'permission', 'apply', '--role', 'Member', '--file', file,
+    ]).catch((e: unknown) => e) as { exitCode?: number };
+    expect(err.exitCode).toBe(EXIT.USAGE);
+  });
+});
+
 describe('permission set-flag', () => {
   it('USAGE without --enable or --disable', async () => {
     const err = await runCli(registerPermissionCommands, [
