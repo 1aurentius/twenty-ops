@@ -1,6 +1,8 @@
 import type { Command } from 'commander';
+import { CliError, EXIT } from '../api/errors.js';
 import { makeCtx, type Ctx } from '../lib/context.js';
-import { emitOne } from '../lib/output.js';
+import { loadInputFile } from '../lib/input-file.js';
+import { emitOk, emitOne } from '../lib/output.js';
 
 interface CurrentWorkspace {
   id: string;
@@ -60,6 +62,71 @@ export function registerSettingsCommands(program: Command): void {
         ctx.out,
       );
     });
+
+  settings
+    .command('update')
+    .description('update workspace settings (use --file for bulk, or named flags for one-off toggles)')
+    .option('--file <path>', 'JSON/YAML object matching UpdateWorkspaceInput; merged with named flags')
+    .option('--display-name <text>')
+    .option('--subdomain <text>')
+    .option('--allow-impersonation <bool>', 'true|false', parseBool)
+    .option('--is-public-invite-link-enabled <bool>', 'true|false', parseBool)
+    .option('--is-google-auth-enabled <bool>', 'true|false', parseBool)
+    .option('--is-microsoft-auth-enabled <bool>', 'true|false', parseBool)
+    .option('--is-password-auth-enabled <bool>', 'true|false', parseBool)
+    .option('--is-two-factor-authentication-enforced <bool>', 'true|false', parseBool)
+    .option('--trash-retention-days <n>', 'days to retain soft-deleted records', (v) => Number(v))
+    .option('--event-log-retention-days <n>', 'days to retain event log entries', (v) => Number(v))
+    .action(async (opts: Record<string, unknown>, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const data: Record<string, unknown> = {};
+      // File contents come first; named flags override.
+      if (typeof opts.file === 'string') {
+        const fromFile = loadInputFile<Record<string, unknown>>(opts.file);
+        if (Array.isArray(fromFile) || typeof fromFile !== 'object' || fromFile === null) {
+          throw new CliError(`${opts.file} must be a JSON/YAML object`, EXIT.USAGE);
+        }
+        Object.assign(data, fromFile);
+      }
+      const flagMap: Record<string, string> = {
+        displayName: 'displayName',
+        subdomain: 'subdomain',
+        allowImpersonation: 'allowImpersonation',
+        isPublicInviteLinkEnabled: 'isPublicInviteLinkEnabled',
+        isGoogleAuthEnabled: 'isGoogleAuthEnabled',
+        isMicrosoftAuthEnabled: 'isMicrosoftAuthEnabled',
+        isPasswordAuthEnabled: 'isPasswordAuthEnabled',
+        isTwoFactorAuthenticationEnforced: 'isTwoFactorAuthenticationEnforced',
+        trashRetentionDays: 'trashRetentionDays',
+        eventLogRetentionDays: 'eventLogRetentionDays',
+      };
+      for (const [optKey, fieldName] of Object.entries(flagMap)) {
+        if (opts[optKey] !== undefined) data[fieldName] = opts[optKey];
+      }
+      if (Object.keys(data).length === 0) {
+        throw new CliError(
+          'nothing to update — pass --file or at least one named flag',
+          EXIT.USAGE,
+        );
+      }
+      const updated = await ctx.metadata.request<{ updateWorkspace: CurrentWorkspace }>(
+        `mutation($data: UpdateWorkspaceInput!) {
+           updateWorkspace(data: $data) { ${CURRENT_WORKSPACE_FIELDS} }
+         }`,
+        { data },
+      );
+      emitOk(
+        `updated workspace ${updated.updateWorkspace.id}`,
+        updated.updateWorkspace as unknown as Record<string, unknown>,
+        ctx.out,
+      );
+    });
+}
+
+function parseBool(v: string): boolean {
+  if (v === 'true') return true;
+  if (v === 'false') return false;
+  throw new CliError(`expected true|false, got "${v}"`, EXIT.USAGE);
 }
 
 function settingsColumns(ctx: Ctx): string[] {

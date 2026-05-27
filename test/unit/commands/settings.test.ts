@@ -10,6 +10,7 @@ vi.mock('node:os', async () => {
   return { ...actual, homedir: () => HOME.current };
 });
 
+import { EXIT } from '../../../src/api/errors.js';
 import { registerSettingsCommands } from '../../../src/commands/settings.js';
 import { runCli } from '../../helpers/cli-harness.js';
 import { type FetchStub, stubFetch } from '../../helpers/graphql-mock.js';
@@ -94,5 +95,59 @@ describe('settings get', () => {
     // And the giant nested lists are NOT — those belong under `view list`.
     expect(query).not.toContain('viewFields');
     expect(query).not.toContain('viewFilters');
+  });
+});
+
+describe('settings update', () => {
+  it('USAGE when no flags or file are passed', async () => {
+    const err = await runCli(registerSettingsCommands, ['settings', 'update']).catch((e: unknown) => e) as { exitCode?: number };
+    expect(err.exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('named flags map to the right UpdateWorkspaceInput field names', async () => {
+    fetchStub.reply('/metadata', { data: { updateWorkspace: sampleWorkspace } });
+
+    await runCli(registerSettingsCommands, [
+      'settings', 'update',
+      '--display-name', 'New Name',
+      '--allow-impersonation', 'true',
+      '--is-public-invite-link-enabled', 'false',
+      '--trash-retention-days', '60',
+    ]);
+
+    const call = fetchStub.calls[0]!;
+    const v = (call.body as { variables: { data: Record<string, unknown> } }).variables;
+    expect(v.data).toEqual({
+      displayName: 'New Name',
+      allowImpersonation: true,
+      isPublicInviteLinkEnabled: false,
+      trashRetentionDays: 60,
+    });
+  });
+
+  it('named flag overrides file content for the same field', async () => {
+    fetchStub.reply('/metadata', { data: { updateWorkspace: sampleWorkspace } });
+    const { writeFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const file = join(HOME.current, 'patch.json');
+    writeFileSync(file, JSON.stringify({ displayName: 'From File', subdomain: 'from-file' }));
+
+    await runCli(registerSettingsCommands, [
+      'settings', 'update', '--file', file, '--display-name', 'From Flag',
+    ]);
+
+    const call = fetchStub.calls[0]!;
+    const v = (call.body as { variables: { data: { displayName: string; subdomain: string } } }).variables;
+    expect(v.data.displayName).toBe('From Flag');
+    expect(v.data.subdomain).toBe('from-file');
+  });
+
+  it('USAGE when --file is an array', async () => {
+    const { writeFileSync } = await import('node:fs');
+    const { join } = await import('node:path');
+    const file = join(HOME.current, 'bad.json');
+    writeFileSync(file, JSON.stringify([{ displayName: 'A' }]));
+    const err = await runCli(registerSettingsCommands, ['settings', 'update', '--file', file]).catch((e: unknown) => e) as { exitCode?: number };
+    expect(err.exitCode).toBe(EXIT.USAGE);
   });
 });

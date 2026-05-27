@@ -32,6 +32,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `api-key` (CRUD + rotate)     | yes     | ✓    | ✓           |           |
 | `webhook` (CRUD)              | yes     | ✓    | ✓           |           |
 | `settings get` (read)         | yes     | ✓    | ✓           | n/a       |
+| `settings update` (write)     | yes     | ✓    | ✓ (read + AUTH gate; mutations user-scoped) |  |
 | `role` (CRUD)                 | yes     | ✓    | ✓           |           |
 | `member` (CRUD + settings)    | yes     | ✓    | ✓           |           |
 | `invitation` (list/send/resend/revoke) | yes  | ✓ | ✓ (read + AUTH gate; mutations user-scoped) |  |
@@ -44,7 +45,6 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 
 | Domain                              | API status | Phase |
 |-------------------------------------|------------|-------|
-| Settings (write) `updateWorkspace`  | Stable mutation             | 5     |
 | Members + roles + permissions       | Stable, complex             | 5     |
 | Workflow steps + activation         | Blocked on Twenty image     | 6     |
 | AI agents, page layouts, marketplace, SSO | Stable but lower priority | stretch |
