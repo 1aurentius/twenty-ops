@@ -56,6 +56,8 @@ remote    list | current | add <name> --url --key | use <name> | remove <name>
 whoami    show the connected workspace
 doctor    end-to-end self-check (remote + auth + schema + view + records round-trip)
 settings  get                                    dump currentWorkspace config
+          update [--file f.json] [--display-name | --allow-impersonation | ...]
+                                                  workspace toggles + retention windows
 
 api-key   list [--include-revoked]
           get <id>
@@ -92,12 +94,32 @@ record    list <object> [--filter --limit --order-by --starting-after]
           restore <object> <id>                  un-soft-delete from recycle bin
           bulk-upsert <object> --file f.json --key <fieldName>
                                                  declarative reconcile by key
+          merge <object> <id1> <id2> [--priority N] [--dry-run]
+                                                 dedup people/companies
 
 object    list [--include-inactive] | get <ref>
           create --file f.json | update <ref> --file f.json | delete <ref>
 
 field     list --object <ref> [--include-inactive] | get <id>
           create --object <ref> --file f.json | update <id> --file f.json | delete <id>
+
+role        list | get <ref> | create --file f.json | update <ref> --file f.json
+            delete <ref> --force
+
+member      list [--limit N] | get <ref>             ref = id or email
+            set-role --member <ref> --role <ref>
+            set-settings <ref> --file f.json
+            remove <ref> --force
+
+invitation  list | send --emails a,b [--role <ref>] | resend <id> | revoke <id>
+
+permission  show --role <ref>
+            set-object --role <ref> --object <ref>
+                       [--read --write --soft-delete --destroy]
+            set-field  --role <ref> --object <ref> --field <id>
+                       [--read --write]
+            set-flag   --role <ref> --flag <NAME> (--enable | --disable)
+            apply --role <ref> --file f.json     declarative bulk
 ```
 
 `--object` accepts an `objectMetadataId` **or** an object name
@@ -139,6 +161,43 @@ cat > status.json <<'EOF'
 EOF
 twenty-ops field create --object project --file status.json
 ```
+
+### Team setup
+
+Stand up RBAC, invite teammates, and tune workspace toggles end-to-end:
+
+```bash
+# Define a custom role
+cat > role.json <<'EOF'
+{ "label": "Sales Ops", "description": "Pipeline + reporting",
+  "canBeAssignedToUsers": true, "canBeAssignedToApiKeys": false }
+EOF
+twenty-ops role create --file role.json --json
+
+# Apply permissions declaratively (replaces — see permission apply notes)
+cat > perms.json <<'EOF'
+{
+  "objects": [
+    { "object": "person",  "read": true, "write": true },
+    { "object": "company", "read": true, "write": true }
+  ],
+  "flags": ["WORKFLOWS", "VIEWS", "EXPORT_CSV"]
+}
+EOF
+twenty-ops permission apply --role "Sales Ops" --file perms.json
+
+# Invite a teammate to that role
+twenty-ops invitation send --emails sales-lead@usva.fi --role "Sales Ops"
+
+# Adjust workspace-wide toggles
+twenty-ops settings update --is-public-invite-link-enabled false \
+                           --trash-retention-days 90
+```
+
+> **Note**: `invitation send` and `settings update` require a *user* context.
+> API keys can `invitation list` and `settings get`, but the mutations return
+> `EXIT.AUTH` with "user context required" — that's a Twenty server-side
+> constraint, not a CLI limitation.
 
 ### Example: an agent setting up a view
 
