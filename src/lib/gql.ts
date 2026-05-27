@@ -39,6 +39,9 @@ export const MEMBER_SUMMARY = `
   roles { id label }
 `;
 
+/** Workspace invitation — `id` doubles as the appTokenId for resend/revoke. */
+export const INVITATION_SUMMARY = `id email roleId expiresAt`;
+
 /** A v4 UUID — used to pre-fill `id` fields the API leaves optional. */
 export function uuid(): string {
   return crypto.randomUUID();
