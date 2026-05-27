@@ -31,6 +31,14 @@ export const WEBHOOK_SUMMARY = `id targetUrl operations description secret creat
 /** Role — RBAC identity record. */
 export const ROLE_SUMMARY = `id label description icon canBeAssignedToUsers canBeAssignedToApiKeys isEditable`;
 
+/** Workspace member — `name` is a nested FullName object. */
+export const MEMBER_SUMMARY = `
+  id userEmail
+  name { firstName lastName }
+  locale colorScheme timeZone dateFormat timeFormat calendarStartDay numberFormat
+  roles { id label }
+`;
+
 /** A v4 UUID — used to pre-fill `id` fields the API leaves optional. */
 export function uuid(): string {
   return crypto.randomUUID();
