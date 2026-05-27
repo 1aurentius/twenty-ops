@@ -5,3 +5,6 @@ dist/
 .env.*
 !.env.test.example
 .DS_Store
+
+# Ad-hoc introspection probes (kept locally, never committed).
+scripts/_*.ts
