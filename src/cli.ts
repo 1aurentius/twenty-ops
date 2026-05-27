@@ -7,6 +7,7 @@ import { registerInvitationCommands } from './commands/invitation.js';
 import { registerMemberCommands } from './commands/member.js';
 import { registerNavCommands } from './commands/nav.js';
 import { registerObjectCommands } from './commands/object.js';
+import { registerPermissionCommands } from './commands/permission.js';
 import { registerRecordCommands } from './commands/record.js';
 import { registerRemoteCommands } from './commands/remote.js';
 import { registerRoleCommands } from './commands/role.js';
@@ -44,6 +45,7 @@ registerSettingsCommands(program);
 registerRoleCommands(program);
 registerMemberCommands(program);
 registerInvitationCommands(program);
+registerPermissionCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();

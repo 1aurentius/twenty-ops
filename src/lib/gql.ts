@@ -42,6 +42,30 @@ export const MEMBER_SUMMARY = `
 /** Workspace invitation — `id` doubles as the appTokenId for resend/revoke. */
 export const INVITATION_SUMMARY = `id email roleId expiresAt`;
 
+/**
+ * Role with full nested permissions — used by `permission show`. Includes the
+ * role-wide "can*All*" booleans plus the per-object/per-field rows.
+ *
+ * Note ObjectPermission has NO id field; (roleId implicit, objectMetadataId)
+ * is its composite key. FieldPermission and PermissionFlag both have ids.
+ */
+export const ROLE_PERMISSIONS = `
+  id label
+  canUpdateAllSettings canAccessAllTools
+  canReadAllObjectRecords canUpdateAllObjectRecords
+  canSoftDeleteAllObjectRecords canDestroyAllObjectRecords
+  permissionFlags { id flag }
+  objectPermissions {
+    objectMetadataId
+    canReadObjectRecords canUpdateObjectRecords
+    canSoftDeleteObjectRecords canDestroyObjectRecords
+  }
+  fieldPermissions {
+    id objectMetadataId fieldMetadataId
+    canReadFieldValue canUpdateFieldValue
+  }
+`;
+
 /** A v4 UUID — used to pre-fill `id` fields the API leaves optional. */
 export function uuid(): string {
   return crypto.randomUUID();
