@@ -26,7 +26,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `workflow set-trigger`        | yes     | ✓    | ✓           | ✓         |
 | `workflow versions/runs`      | yes     | ✓    |             |           |
 | `doctor` (self-check)         | yes     | ✓    | ✓           | n/a       |
-| `record` (CRUD + bulk-upsert) | yes     | ✓    | ✓           | ✓         |
+| `record` (CRUD + bulk-upsert + merge) | yes | ✓ | ✓           | ✓         |
 | `object` (CRUD)               | yes     | ✓    | ✓           |           |
 | `field` (CRUD)                | yes     | ✓    | ✓           |           |
 | `api-key` (CRUD + rotate)     | yes     | ✓    | ✓           |           |

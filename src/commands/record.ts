@@ -36,6 +36,7 @@ export function registerRecordCommands(program: Command): void {
   registerDelete(record);
   registerRestore(record);
   registerBulkUpsert(record);
+  registerMerge(record);
 }
 
 interface RecordRow {
@@ -263,6 +264,67 @@ function registerBulkUpsert(record: Command): void {
         );
       },
     );
+}
+
+/**
+ * `record merge` — Twenty exposes `mergePeople` / `mergeCompanies` on the CORE
+ * GraphQL endpoint (not REST). They take a list of ids, a 0-based priority
+ * index (which record wins on field conflict), and an optional dryRun flag.
+ *
+ * Verified shapes (live probe):
+ *   core.mergePeople(ids: [String!]!, conflictPriorityIndex: Int!, dryRun: Boolean): Person
+ *   core.mergeCompanies(ids: [String!]!, conflictPriorityIndex: Int!, dryRun: Boolean): Company
+ *
+ * No other objects are merge-able — Twenty hard-codes the dedup logic per
+ * type. Other objects return USAGE with an explicit message.
+ */
+function registerMerge(record: Command): void {
+  record
+    .command('merge <object> <ids...>')
+    .description('merge 2+ records of the same object — supported only for person/company')
+    .option('--priority <n>', '0-based index: which input wins on field conflict (default 0)', (v) => Number(v), 0)
+    .option('--dry-run', 'preview the merged record without committing', false)
+    .action(async (ref: string, ids: string[], opts: { priority: number; dryRun?: boolean }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      if (ids.length < 2) {
+        throw new CliError(`record merge needs at least 2 ids, got ${ids.length}`, EXIT.USAGE);
+      }
+      const mutation = pickMergeMutation(ref);
+      if (!mutation) {
+        throw new CliError(
+          `record merge is supported only for person/people or company/companies, got "${ref}"`,
+          EXIT.USAGE,
+        );
+      }
+      const { name, selection } = mutation;
+      const data = await ctx.core.request<Record<string, RecordRow>>(
+        `mutation($ids: [String!]!, $idx: Int!, $dry: Boolean) {
+           ${name}(ids: $ids, conflictPriorityIndex: $idx, dryRun: $dry) { ${selection} }
+         }`,
+        { ids, idx: opts.priority, dry: !!opts.dryRun },
+      );
+      const merged = data[name];
+      if (!merged) {
+        throw new CliError(`unexpected response from ${name}: ${JSON.stringify(data)}`, EXIT.API);
+      }
+      emitOk(
+        opts.dryRun
+          ? `dry-run: would merge ${ids.length} ${ref} into ${merged.id}`
+          : `merged ${ids.length} ${ref} → ${merged.id}`,
+        merged,
+        ctx.out,
+      );
+    });
+}
+
+function pickMergeMutation(ref: string): { name: string; selection: string } | undefined {
+  if (ref === 'person' || ref === 'people') {
+    return { name: 'mergePeople', selection: 'id name { firstName lastName } jobTitle' };
+  }
+  if (ref === 'company' || ref === 'companies') {
+    return { name: 'mergeCompanies', selection: 'id name domainName { primaryLinkUrl }' };
+  }
+  return undefined;
 }
 
 function capitalize(s: string): string {

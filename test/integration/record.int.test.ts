@@ -147,3 +147,45 @@ describe.skipIf(!INTEGRATION)('record bulk-upsert lifecycle (custom object)', ()
     expect(JSON.parse(r2.stdout.trim())).toMatchObject({ created: 1, updated: 1, deleted: 1, unchanged: 1 });
   });
 });
+
+describe.skipIf(!INTEGRATION)('record merge integration (person)', () => {
+  const cleanup: string[] = [];
+
+  beforeAll(assertLocalRemote);
+  afterAll(async () => {
+    for (const id of cleanup) await runRec('delete', 'person', id).catch(() => undefined);
+  });
+
+  it('merges two people into one — survivor matches --priority index', async () => {
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'merge-int-'));
+
+    // Create two people with overlapping jobTitle for a deliberate field conflict
+    const f1 = join(dir, 'p1.json');
+    writeFileSync(f1, JSON.stringify({ name: { firstName: `${TAG}-merge1`, lastName: 'A' }, jobTitle: 'Original' }));
+    const f2 = join(dir, 'p2.json');
+    writeFileSync(f2, JSON.stringify({ name: { firstName: `${TAG}-merge2`, lastName: 'B' }, jobTitle: 'Duplicate' }));
+
+    const r1 = await runRec('create', 'person', '--file', f1, '--json');
+    const r2 = await runRec('create', 'person', '--file', f2, '--json');
+    const id1 = (JSON.parse(r1.stdout.trim()) as { id: string }).id;
+    const id2 = (JSON.parse(r2.stdout.trim()) as { id: string }).id;
+
+    // Dry-run first — should NOT actually merge (both ids still resolvable after)
+    const dry = await runRec('merge', 'person', id1, id2, '--dry-run', '--json');
+    const dryResult = JSON.parse(dry.stdout.trim()) as { id: string };
+    expect(dryResult.id).toMatch(/^[0-9a-f-]{36}$/);
+
+    const stillThere = await runRec('get', 'person', id2, '--json').catch(() => null);
+    expect(stillThere).not.toBeNull();
+
+    // Real merge — priority 0 means id1 wins on conflict
+    const merged = await runRec('merge', 'person', id1, id2, '--priority', '0', '--json');
+    const m = JSON.parse(merged.stdout.trim()) as { id: string; jobTitle: string };
+    cleanup.push(m.id);
+    expect(m.id).toBe(id1);
+    expect(m.jobTitle).toBe('Original'); // priority 0 → id1 wins
+  });
+});

@@ -225,6 +225,59 @@ describe('record restore', () => {
   });
 });
 
+describe('record merge', () => {
+  it('USAGE when fewer than 2 ids passed', async () => {
+    const err = await runCli(registerRecordCommands, [
+      'record', 'merge', 'person', 'only-one-id',
+    ]).catch((e: unknown) => e) as { exitCode?: number };
+    expect(err.exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('USAGE when object is not person or company', async () => {
+    const err = await runCli(registerRecordCommands, [
+      'record', 'merge', 'note', 'id1', 'id2',
+    ]).catch((e: unknown) => e) as { exitCode?: number; message?: string };
+    expect(err.exitCode).toBe(EXIT.USAGE);
+    expect(err.message).toContain('person/people or company/companies');
+  });
+
+  it('person: calls core.mergePeople with ids + priority + dryRun=false', async () => {
+    fetchStub.reply('/graphql', { data: { mergePeople: { id: 'p1', name: { firstName: 'A', lastName: 'M' }, jobTitle: 'Eng' } } });
+
+    const { stdout } = await runCli(registerRecordCommands, [
+      'record', 'merge', 'person', 'p1', 'p2', 'p3', '--priority', '1',
+    ]);
+    expect(stdout).toContain('merged 3 person → p1');
+
+    const call = fetchStub.calls[0]!;
+    expect(call.url).toContain('/graphql');
+    const q = (call.body as { query: string }).query;
+    expect(q).toContain('mergePeople(ids: $ids,');
+    const v = (call.body as { variables: { ids: string[]; idx: number; dry: boolean } }).variables;
+    expect(v.ids).toEqual(['p1', 'p2', 'p3']);
+    expect(v.idx).toBe(1);
+    expect(v.dry).toBe(false);
+  });
+
+  it('--dry-run sets dry=true and emits a different verdict line', async () => {
+    fetchStub.reply('/graphql', { data: { mergePeople: { id: 'p1', name: { firstName: 'A', lastName: 'M' } } } });
+    const { stdout } = await runCli(registerRecordCommands, [
+      'record', 'merge', 'people', 'p1', 'p2', '--dry-run',
+    ]);
+    expect(stdout).toContain('dry-run: would merge 2 people');
+
+    const v = (fetchStub.calls[0]!.body as { variables: { dry: boolean } }).variables;
+    expect(v.dry).toBe(true);
+  });
+
+  it('company: calls core.mergeCompanies', async () => {
+    fetchStub.reply('/graphql', { data: { mergeCompanies: { id: 'c1', name: 'Acme', domainName: { primaryLinkUrl: 'https://acme.test' } } } });
+    await runCli(registerRecordCommands, ['record', 'merge', 'companies', 'c1', 'c2']);
+    const q = (fetchStub.calls[0]!.body as { query: string }).query;
+    expect(q).toContain('mergeCompanies(');
+  });
+});
+
 describe('record bulk-upsert', () => {
   it('creates missing records and skips unchanged ones', async () => {
     scriptPersonObject(fetchStub);
