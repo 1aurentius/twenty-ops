@@ -1,5 +1,6 @@
 import { Command, CommanderError } from 'commander';
 import { CliError, EXIT } from './api/errors.js';
+import { registerAgentCommands } from './commands/agent.js';
 import { registerApiKeyCommands } from './commands/api-key.js';
 import { registerDashboardCommands } from './commands/dashboard.js';
 import { registerDoctorCommand } from './commands/doctor.js';
@@ -54,6 +55,7 @@ registerLogicFunctionCommands(program);
 registerPageLayoutCommands(program);
 registerDashboardCommands(program);
 registerSkillCommands(program);
+registerAgentCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();
