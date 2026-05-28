@@ -2,6 +2,7 @@ import { Command, CommanderError } from 'commander';
 import { CliError, EXIT } from './api/errors.js';
 import { registerAgentCommands } from './commands/agent.js';
 import { registerApiKeyCommands } from './commands/api-key.js';
+import { registerChatCommands } from './commands/chat.js';
 import { registerDashboardCommands } from './commands/dashboard.js';
 import { registerDoctorCommand } from './commands/doctor.js';
 import { registerFieldCommands } from './commands/field.js';
@@ -56,6 +57,7 @@ registerPageLayoutCommands(program);
 registerDashboardCommands(program);
 registerSkillCommands(program);
 registerAgentCommands(program);
+registerChatCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();
