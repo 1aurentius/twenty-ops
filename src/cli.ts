@@ -15,6 +15,7 @@ import { registerRecordCommands } from './commands/record.js';
 import { registerRemoteCommands } from './commands/remote.js';
 import { registerRoleCommands } from './commands/role.js';
 import { registerSettingsCommands } from './commands/settings.js';
+import { registerSkillCommands } from './commands/skill.js';
 import { registerViewCommands } from './commands/view.js';
 import { registerWebhookCommands } from './commands/webhook.js';
 import { registerWhoamiCommand } from './commands/whoami.js';
@@ -52,6 +53,7 @@ registerPermissionCommands(program);
 registerLogicFunctionCommands(program);
 registerPageLayoutCommands(program);
 registerDashboardCommands(program);
+registerSkillCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();

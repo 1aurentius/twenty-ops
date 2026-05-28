@@ -73,6 +73,36 @@ export const DASHBOARD_SUMMARY = `
   id title position pageLayoutId createdAt updatedAt
 `;
 
+/** Skill — named tool/behavior an agent can perform. */
+export const SKILL_SUMMARY = `
+  id name label icon description isCustom isActive applicationId createdAt updatedAt
+`;
+
+/** Agent — workspace-scoped LLM-backed assistant. */
+export const AGENT_SUMMARY = `
+  id name label icon description prompt modelId roleId isCustom applicationId
+  evaluationInputs createdAt updatedAt
+`;
+
+/**
+ * Agent reasoning turn — captured execution of a single user→assistant cycle.
+ * `evaluations` and `messages` are LIST(NON_NULL) unions; omitted from this
+ * summary to keep the selection scalar. Read via the Twenty UI for details.
+ */
+export const AGENT_TURN_SUMMARY = `id threadId agentId createdAt`;
+
+/**
+ * Chat thread (`AgentChatThread`) — persistent multi-turn conversation with an
+ * agent. Token + credit counters are included so an agent can budget cost
+ * before continuing the thread.
+ */
+export const CHAT_THREAD_SUMMARY = `
+  id title conversationSize
+  totalInputTokens totalOutputTokens contextWindowTokens
+  totalInputCredits totalOutputCredits
+  lastMessageAt createdAt updatedAt
+`;
+
 /** Workspace member — `name` is a nested FullName object. */
 export const MEMBER_SUMMARY = `
   id userEmail
