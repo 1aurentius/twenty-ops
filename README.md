@@ -2,11 +2,13 @@
 
 A token-efficient command-line interface for managing a **live [Twenty](https://twenty.com) CRM workspace** — built for command-line AI agents (Claude Code and the like) doing forward deployment of client CRMs.
 
-> **Status:** v0.6. 18 command groups covering schema-as-code (objects,
+> **Status:** v0.7. 20 command groups covering schema-as-code (objects,
 > fields), records, views + navigation + groups, workflows + automated
 > triggers, team setup (roles, members, invitations, permissions), API
-> keys, webhooks, workspace settings (read+write), and server-side
-> programmability (logic functions). See [`docs/coverage.md`](docs/coverage.md)
+> keys, webhooks, workspace settings (read+write), server-side
+> programmability (logic functions), record-detail and dashboard page
+> layouts (page-layout / tab / widget + view + fields widget upserts),
+> and workspace dashboards. See [`docs/coverage.md`](docs/coverage.md)
 > for what's mapped vs deferred.
 
 ## Why a CLI?
@@ -139,6 +141,25 @@ logic-function
             update <ref> --file f.json | delete <ref>
             execute <ref> [--input <json> | --input-file f.json]
                                                   run the handler, print result
+
+page-layout list --object <ref> [--type T]   T = RECORD_INDEX | RECORD_PAGE |
+                                                  DASHBOARD | STANDALONE_PAGE
+            get <id> | create --file f.json | update <id> --file f.json
+            delete <id>                          # destroyPageLayout (hard)
+            reset <id>                            # stock layouts only
+            tab list <pageLayoutId>
+            tab get <tabId> | tab create --page-layout <id> --file f.json
+            tab update <tabId> --file f.json | tab delete <tabId> | tab reset <tabId>
+            widget list <pageLayoutTabId>
+            widget get <widgetId> | widget create --tab <id> --file f.json
+            widget update <id> --file | widget delete <id> | widget reset <id>
+            widget configure-view   <widgetId> --file f.json   upsertViewWidget
+            widget configure-fields <widgetId> --file f.json   upsertFieldsWidget
+
+dashboard   list [--limit N] [--starting-after <cursor>]
+            get <id> | create --file f.json | update <id> --file f.json
+            delete <id>                           # soft-delete
+            restore <id>
 ```
 
 `--object` accepts an `objectMetadataId` **or** an object name
@@ -250,6 +271,57 @@ twenty-ops workflow trigger create --workflow <workflowId> --file trigger.json
 > but does NOT activate the workflow version. `activateWorkflowVersion`
 > is still unexposed on the pinned Twenty image; activate through the
 > Twenty UI until a later image lifts the gate.
+
+### Record-detail pages + dashboards as code
+
+Define custom record-detail pages and workspace dashboards from JSON:
+
+```bash
+# 1) Create a record-detail page layout scoped to an object
+cat > layout.json <<'EOF'
+{ "name": "Sales person view", "type": "RECORD_PAGE",
+  "objectMetadataId": "<personObjectId>" }
+EOF
+twenty-ops page-layout create --file layout.json --json
+# → { "id": "<layoutId>", ... }
+
+# 2) Add a tab to the layout
+cat > tab.json <<'EOF'
+{ "title": "Pipeline", "position": 0, "layoutMode": "GRID" }
+EOF
+twenty-ops page-layout tab create --page-layout <layoutId> --file tab.json --json
+
+# 3) Drop a VIEW widget on the tab, then bind it to an existing view
+cat > widget.json <<'EOF'
+{ "title": "Open deals", "type": "VIEW",
+  "gridPosition": { "row": 0, "column": 0, "rowSpan": 4, "columnSpan": 12 },
+  "configuration": { "__typename": "ViewConfiguration", "viewId": "<viewId>" } }
+EOF
+twenty-ops page-layout widget create --tab <tabId> --file widget.json --json
+
+# 4) Wire the widget's view content explicitly
+cat > view-cfg.json <<'EOF'
+{ "viewFields": [{ "fieldMetadataId": "<nameFieldId>", "isVisible": true, "position": 0 }],
+  "viewFilters": [], "viewFilterGroups": [], "viewSorts": [] }
+EOF
+twenty-ops page-layout widget configure-view <widgetId> --file view-cfg.json
+
+# 5) Define a dashboard that uses a DASHBOARD-typed page layout
+twenty-ops page-layout create --file dashboard-layout.json --json
+twenty-ops dashboard create --file dashboard.json --json
+```
+
+> **Configuration shape**: each `WidgetType` has its own typed configuration
+> (e.g. `ViewConfiguration { viewId }`, `IframeConfiguration { url }`,
+> `StandaloneRichTextConfiguration { content }`). Twenty validates the shape
+> server-side and rejects mismatches with `"Invalid configuration: missing
+> configuration type"` — capture the exact shape from a working widget via
+> `page-layout widget get <id> --json` once you have one.
+>
+> **Reset only on stock layouts**: `page-layout reset` /
+> `page-layout tab reset` / `page-layout widget reset` only work on stock
+> Twenty layouts. Custom layouts return `"Custom page layout … cannot be
+> reset to default"` — delete + recreate instead.
 
 ### Example: an agent setting up a view
 

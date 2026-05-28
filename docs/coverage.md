@@ -42,6 +42,11 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `invitation` (list/send/resend/revoke) | yes  | ✓ | ✓ (read + AUTH gate; mutations user-scoped) |  |
 | `permission` (show / set-* / apply)           | yes     | ✓ | ✓     |           |
 | `logic-function` (CRUD + source + execute)    | yes     | ✓ | ✓     |           |
+| `page-layout` (CRUD + reset)                  | yes     | ✓ | ✓     |           |
+| `page-layout tab` (CRUD + reset)              | yes     | ✓ | ✓     |           |
+| `page-layout widget` (CRUD + reset)           | yes     | ✓ | ✓ (server-gated on configuration type) |  |
+| `page-layout widget configure-view/-fields`   | yes     | ✓ |        |           |
+| `dashboard` (CRUD + restore)                  | yes     | ✓ | ✓     |           |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 | **Framework: seed automation**| n/a     | n/a  | ✓ (verified) | n/a      |
@@ -50,10 +55,11 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 
 | Domain                              | API status | Phase |
 |-------------------------------------|------------|-------|
-| Workflow steps + activation         | Blocked on Twenty image     | v0.7+ |
-| View widgets + page-layout widgets  | Stable; widgets live on page layouts | v0.7 |
-| Page layouts + tabs + dashboards    | Stable, well-defined        | v0.7 |
-| Connected accounts + channels       | OAuth-coupled creation      | v0.7+ |
+| Workflow steps + activation         | Blocked on Twenty image     | v0.8+ |
+| Connected accounts + channels       | OAuth-coupled creation      | v0.8 |
+| Blocklists                          | Stable, small surface       | v0.8 |
 | AI agents + skills + chat threads   | Stable, niche               | stretch |
 | SSO + custom/public/emailing domains | Stable, enterprise-focused | stretch |
 | Application registrations + marketplace | Stable, publishers only | stretch |
+| Front components + command menu items | Stable, UI extensibility | stretch |
+| `page-layout sync --file`           | Uses updatePageLayoutWithTabsAndWidgets | v0.8 |
