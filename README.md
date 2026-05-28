@@ -2,7 +2,12 @@
 
 A token-efficient command-line interface for managing a **live [Twenty](https://twenty.com) CRM workspace** — built for command-line AI agents (Claude Code and the like) doing forward deployment of client CRMs.
 
-> **Status:** v0.1 prototype. Scope is deliberately small: **views & navigation** and **workflows**. Records and metadata/schema editing are future phases.
+> **Status:** v0.6. 18 command groups covering schema-as-code (objects,
+> fields), records, views + navigation + groups, workflows + automated
+> triggers, team setup (roles, members, invitations, permissions), API
+> keys, webhooks, workspace settings (read+write), and server-side
+> programmability (logic functions). See [`docs/coverage.md`](docs/coverage.md)
+> for what's mapped vs deferred.
 
 ## Why a CLI?
 
@@ -74,9 +79,12 @@ view      list [--object <ref>] [--type <T>]   list views
           get <viewId>                          view + its fields/filters/sorts
           create --object <ref> --name [...]    create a view
           update <viewId> [...] | delete <viewId>
-          set-fields  <viewId> --file f.json    reconcile fields  (declarative)
-          set-filters <viewId> --file f.json    reconcile filters (declarative)
-          set-sorts   <viewId> --file f.json    reconcile sorts   (declarative)
+          set-fields        <viewId> --file f.json    reconcile fields
+          set-filters       <viewId> --file f.json    reconcile filters
+          set-sorts         <viewId> --file f.json    reconcile sorts
+          set-groups        <viewId> --file f.json    kanban fieldValue buckets
+          set-filter-groups <viewId> --file f.json    AND/OR hierarchies for filters
+          set-field-groups  <viewId> --file f.json    collapsible section labels
 
 nav       list | add --name (--view <id> | --folder | --link <url>) [...]
           update <navItemId> [...] | remove <navItemId>
@@ -87,6 +95,10 @@ workflow  list | get <id> | versions <id> | runs <id> [...]
           version get <versionId>                trigger + steps of a version
           set-trigger <versionId> --file f.json  set a DRAFT version's trigger
           run get <runId>                        a run including per-step state
+          trigger list <workflowId>              CRON / DATABASE_EVENT triggers
+          trigger get <triggerId>
+          trigger create --workflow <id> --file f.json
+          trigger update <triggerId> --file f.json | trigger delete <triggerId>
 
 record    list <object> [--filter --limit --order-by --starting-after]
           get <object> <id> | create <object> --file f.json
@@ -120,6 +132,13 @@ permission  show --role <ref>
                        [--read --write]
             set-flag   --role <ref> --flag <NAME> (--enable | --disable)
             apply --role <ref> --file f.json     declarative bulk
+
+logic-function
+            list | get <ref> | source <ref>     ref = id or unique name
+            create --file f.json                pass-through to Twenty's mutation
+            update <ref> --file f.json | delete <ref>
+            execute <ref> [--input <json> | --input-file f.json]
+                                                  run the handler, print result
 ```
 
 `--object` accepts an `objectMetadataId` **or** an object name
@@ -198,6 +217,39 @@ twenty-ops settings update --is-public-invite-link-enabled false \
 > API keys can `invitation list` and `settings get`, but the mutations return
 > `EXIT.AUTH` with "user context required" — that's a Twenty server-side
 > constraint, not a CLI limitation.
+
+### Programmability
+
+Inspect, execute, and manage server-side logic functions, plus wire up
+workflow automated triggers (CRON / DATABASE_EVENT):
+
+```bash
+# Inspect what's already deployed in the workspace
+twenty-ops logic-function list --json
+twenty-ops logic-function source my-handler           # print the TS source
+
+# Invoke a deployed handler with a payload
+twenty-ops logic-function execute my-handler \
+                                   --input '{"name":"Ada"}' --json
+
+# Wire a CRON automated trigger to a workflow
+cat > trigger.json <<'EOF'
+{ "type": "CRON",
+  "settings": { "schedule": "0 9 * * 1-5" } }
+EOF
+twenty-ops workflow trigger create --workflow <workflowId> --file trigger.json
+```
+
+> **Authoring path**: scaffold + deploy logic functions with
+> `yarn twenty add logicFunction` and `yarn twenty install` (the official
+> SDK packs them into a tarball the server expects). This CLI's
+> `logic-function create/update` are pass-through escape hatches — useful
+> when an agent already has the right wire shape.
+>
+> **Activation**: `workflow trigger create` registers the trigger record
+> but does NOT activate the workflow version. `activateWorkflowVersion`
+> is still unexposed on the pinned Twenty image; activate through the
+> Twenty UI until a later image lifts the gate.
 
 ### Example: an agent setting up a view
 
