@@ -104,4 +104,61 @@ describe.skipIf(!INTEGRATION)('page-layout root integration', () => {
     const err = await runPl('get', '00000000-0000-4000-8000-000000000000').catch((e: unknown) => e);
     expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
   });
+
+  it('tab CRUD lifecycle: create page layout → create tab → list → update → delete', async () => {
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'pl-tab-int-'));
+
+    // Parent layout
+    const plFile = join(dir, 'pl.json');
+    writeFileSync(plFile, JSON.stringify({
+      name: `${TAG}-tab-parent`,
+      type: 'RECORD_PAGE',
+      objectMetadataId: objectId,
+    }));
+    let plId = '';
+    try {
+      const created = await runPl('create', '--file', plFile, '--json');
+      plId = (JSON.parse(created.stdout.trim()) as { id: string }).id;
+      cleanup.push(plId);
+    } catch (err) {
+      const e = err as { exitCode?: number; message?: string };
+      if (e.exitCode === EXIT.API) {
+        // eslint-disable-next-line no-console
+        console.warn(`page-layout create gated: ${e.message}`);
+        return;
+      }
+      throw err;
+    }
+
+    // Tab
+    const tabFile = join(dir, 'tab.json');
+    writeFileSync(tabFile, JSON.stringify({
+      title: 'Overview',
+      position: 0,
+      layoutMode: 'GRID',
+    }));
+    const tabCreated = await runPl('tab', 'create', '--page-layout', plId, '--file', tabFile, '--json');
+    const tabRow = JSON.parse(tabCreated.stdout.trim()) as { id: string; title: string };
+    expect(tabRow.title).toBe('Overview');
+
+    // list under parent layout
+    const listOut = await runPl('tab', 'list', plId, '--json');
+    const ids = listOut.stdout.trim().split('\n').filter(Boolean).map((l) => (JSON.parse(l) as { id: string }).id);
+    expect(ids).toContain(tabRow.id);
+
+    // update title
+    const patchFile = join(dir, 'patch.json');
+    writeFileSync(patchFile, JSON.stringify({ title: 'Overview (renamed)' }));
+    await runPl('tab', 'update', tabRow.id, '--file', patchFile);
+    const reread = await runPl('tab', 'get', tabRow.id, '--json');
+    expect((JSON.parse(reread.stdout.trim()) as { title: string }).title).toBe('Overview (renamed)');
+
+    // delete
+    await runPl('tab', 'delete', tabRow.id);
+    const post = await runPl('tab', 'get', tabRow.id).catch((e: unknown) => e) as { exitCode?: number };
+    expect(post.exitCode).toBe(EXIT.NOT_FOUND);
+  });
 });

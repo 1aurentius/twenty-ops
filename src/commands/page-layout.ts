@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
 import { CliError, EXIT } from '../api/errors.js';
 import { makeCtx, type Ctx } from '../lib/context.js';
-import { PAGE_LAYOUT_SUMMARY } from '../lib/gql.js';
+import { PAGE_LAYOUT_SUMMARY, PAGE_LAYOUT_TAB_SUMMARY } from '../lib/gql.js';
 import { loadInputFile } from '../lib/input-file.js';
 import { resolveObjectId } from '../lib/objects.js';
 import { emitList, emitOk, emitOne } from '../lib/output.js';
@@ -132,6 +132,125 @@ export function registerPageLayoutCommands(program: Command): void {
       );
       emitOk(`reset page layout ${id}`, data.resetPageLayoutToDefault as unknown as Record<string, unknown>, ctx.out);
     });
+
+  registerTabSubcommands(pl);
+}
+
+interface PageLayoutTabNode {
+  id: string;
+  title: string;
+  position: number;
+  pageLayoutId: string;
+  icon: string | null;
+  layoutMode: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function registerTabSubcommands(pl: Command): void {
+  const tab = pl.command('tab').description('manage tabs inside a page layout');
+
+  tab.command('list <pageLayoutId>')
+    .description("list a page layout's tabs")
+    .action(async (pageLayoutId: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const data = await ctx.metadata.request<{ getPageLayoutTabs: PageLayoutTabNode[] }>(
+        `query Tabs($id: String!) { getPageLayoutTabs(pageLayoutId: $id) { ${PAGE_LAYOUT_TAB_SUMMARY} } }`,
+        { id: pageLayoutId },
+      );
+      emitList(data.getPageLayoutTabs, tabColumns(ctx), ctx.out);
+    });
+
+  tab.command('get <tabId>')
+    .description('show one tab')
+    .action(async (id: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const data = await ctx.metadata.request<{ getPageLayoutTab: PageLayoutTabNode | null }>(
+        `query Tab($id: String!) { getPageLayoutTab(id: $id) { ${PAGE_LAYOUT_TAB_SUMMARY} } }`,
+        { id },
+      );
+      if (!data.getPageLayoutTab) throw new CliError(`page layout tab "${id}" not found`, EXIT.NOT_FOUND);
+      emitOne(
+        data.getPageLayoutTab as unknown as Record<string, unknown>,
+        tabColumns(ctx),
+        ctx.out,
+      );
+    });
+
+  tab.command('create')
+    .description('create a tab inside a page layout')
+    .requiredOption('--page-layout <id>', 'parent page layout id')
+    .requiredOption('--file <path>', 'CreatePageLayoutTabInput { title, position?, layoutMode? }')
+    .action(async (opts: { pageLayout: string; file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const loaded = loadInputFile<Record<string, unknown>>(opts.file);
+      if (Array.isArray(loaded) || typeof loaded !== 'object' || loaded === null) {
+        throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+      }
+      if (typeof loaded.title !== 'string') {
+        throw new CliError(`${opts.file} is missing required field "title"`, EXIT.USAGE);
+      }
+      const input = { pageLayoutId: opts.pageLayout, ...loaded };
+      const data = await ctx.metadata.request<{ createPageLayoutTab: PageLayoutTabNode }>(
+        `mutation Create($input: CreatePageLayoutTabInput!) {
+           createPageLayoutTab(input: $input) { ${PAGE_LAYOUT_TAB_SUMMARY} }
+         }`,
+        { input },
+      );
+      emitOk(
+        `created tab ${data.createPageLayoutTab.id} (${data.createPageLayoutTab.title})`,
+        data.createPageLayoutTab as unknown as Record<string, unknown>,
+        ctx.out,
+      );
+    });
+
+  tab.command('update <tabId>')
+    .description('update a tab from a JSON/YAML file')
+    .requiredOption('--file <path>', 'partial UpdatePageLayoutTabInput { title?, position?, icon?, layoutMode? }')
+    .action(async (id: string, opts: { file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const input = loadInputFile<Record<string, unknown>>(opts.file);
+      if (Array.isArray(input) || typeof input !== 'object' || input === null) {
+        throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+      }
+      const data = await ctx.metadata.request<{ updatePageLayoutTab: PageLayoutTabNode }>(
+        `mutation Update($id: String!, $input: UpdatePageLayoutTabInput!) {
+           updatePageLayoutTab(id: $id, input: $input) { ${PAGE_LAYOUT_TAB_SUMMARY} }
+         }`,
+        { id, input },
+      );
+      emitOk(`updated tab ${id}`, data.updatePageLayoutTab as unknown as Record<string, unknown>, ctx.out);
+    });
+
+  tab.command('delete <tabId>')
+    .description('hard-delete a tab (no soft-delete; cascades to widgets)')
+    .action(async (id: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      await ctx.metadata.request(
+        `mutation Destroy($id: String!) { destroyPageLayoutTab(id: $id) }`,
+        { id },
+      );
+      emitOk(`deleted tab ${id}`, { deleted: id }, ctx.out);
+    });
+
+  tab.command('reset <tabId>')
+    .description('revert a tab to its default (stock layouts only)')
+    .action(async (id: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const data = await ctx.metadata.request<{ resetPageLayoutTabToDefault: PageLayoutTabNode }>(
+        `mutation Reset($id: String!) {
+           resetPageLayoutTabToDefault(id: $id) { ${PAGE_LAYOUT_TAB_SUMMARY} }
+         }`,
+        { id },
+      );
+      emitOk(`reset tab ${id}`, data.resetPageLayoutTabToDefault as unknown as Record<string, unknown>, ctx.out);
+    });
+}
+
+function tabColumns(ctx: Ctx): string[] {
+  if (ctx.out.json) return [];
+  return ['id', 'title', 'position', 'pageLayoutId', 'layoutMode'];
 }
 
 interface PageLayoutNode {

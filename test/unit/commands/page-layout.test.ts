@@ -144,3 +144,73 @@ describe('page-layout reset', () => {
     expect(body(call).variables).toEqual({ id: PL_ID });
   });
 });
+
+const TAB_ID = '33333333-3333-4333-8333-333333333333';
+const TAB = {
+  id: TAB_ID, title: 'Overview', position: 0, pageLayoutId: PL_ID,
+  icon: null, layoutMode: 'GRID', isActive: true,
+  createdAt: '2026-05-25T00:00:00Z', updatedAt: '2026-05-25T00:00:00Z',
+};
+
+describe('page-layout tab list/get', () => {
+  it('list calls getPageLayoutTabs with the page layout id', async () => {
+    fetchStub.reply('/metadata', { data: { getPageLayoutTabs: [TAB] } });
+    const { stdout } = await runPl('tab', 'list', PL_ID, '--json');
+    const rows = stdout.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l) as { id: string });
+    expect(rows[0]?.id).toBe(TAB_ID);
+    expect(body(fetchStub.calls[0]!).variables).toEqual({ id: PL_ID });
+  });
+
+  it('get NOT_FOUND when getPageLayoutTab returns null', async () => {
+    fetchStub.reply('/metadata', { data: { getPageLayoutTab: null } });
+    const err = await runPl('tab', 'get', TAB_ID).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
+  });
+});
+
+describe('page-layout tab create', () => {
+  it('USAGE when --file lacks title', async () => {
+    const f = writeFile('tab.json', { position: 0 });
+    const err = await runPl('tab', 'create', '--page-layout', PL_ID, '--file', f).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('merges --page-layout into the input as pageLayoutId', async () => {
+    const f = writeFile('tab.json', { title: 'Overview', position: 0, layoutMode: 'GRID' });
+    fetchStub.reply('/metadata', { data: { createPageLayoutTab: TAB } });
+    await runPl('tab', 'create', '--page-layout', PL_ID, '--file', f, '--json');
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('createPageLayoutTab(input: $input)');
+    expect(body(call).variables?.input).toMatchObject({
+      pageLayoutId: PL_ID,
+      title: 'Overview',
+      position: 0,
+      layoutMode: 'GRID',
+    });
+  });
+});
+
+describe('page-layout tab update/delete/reset', () => {
+  it('update uses (id, input) shape', async () => {
+    const f = writeFile('patch.json', { title: 'Renamed', icon: 'IconLayoutBoard' });
+    fetchStub.reply('/metadata', { data: { updatePageLayoutTab: TAB } });
+    await runPl('tab', 'update', TAB_ID, '--file', f);
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('updatePageLayoutTab(id: $id, input: $input)');
+    expect(body(call).variables).toEqual({ id: TAB_ID, input: { title: 'Renamed', icon: 'IconLayoutBoard' } });
+  });
+
+  it('delete calls destroyPageLayoutTab', async () => {
+    fetchStub.reply('/metadata', { data: { destroyPageLayoutTab: true } });
+    await runPl('tab', 'delete', TAB_ID);
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('destroyPageLayoutTab(id: $id)');
+    expect(body(call).variables).toEqual({ id: TAB_ID });
+  });
+
+  it('reset calls resetPageLayoutTabToDefault', async () => {
+    fetchStub.reply('/metadata', { data: { resetPageLayoutTabToDefault: TAB } });
+    await runPl('tab', 'reset', TAB_ID);
+    expect(body(fetchStub.calls[0]!).query).toContain('resetPageLayoutTabToDefault(id: $id)');
+  });
+});
