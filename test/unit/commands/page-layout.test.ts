@@ -307,3 +307,44 @@ describe('page-layout widget update/delete/reset', () => {
     expect(body(fetchStub.calls[0]!).query).toContain('resetPageLayoutWidgetToDefault(id: $id)');
   });
 });
+
+describe('page-layout widget configure-view + configure-fields', () => {
+  it('configure-view merges widgetId into the input and calls upsertViewWidget', async () => {
+    const f = writeFile('cfg.json', {
+      viewFields: [{ fieldMetadataId: 'fmd1', isVisible: true, position: 0 }],
+      viewFilters: [],
+      viewFilterGroups: [],
+      viewSorts: [],
+    });
+    fetchStub.reply('/metadata', { data: { upsertViewWidget: { id: 'view-id' } } });
+    const { stdout } = await runPl('widget', 'configure-view', WID_ID, '--file', f, '--json');
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('upsertViewWidget(input: $input)');
+    expect(body(call).variables?.input).toMatchObject({
+      widgetId: WID_ID,
+      viewFields: [{ fieldMetadataId: 'fmd1', isVisible: true, position: 0 }],
+    });
+    expect(JSON.parse(stdout.trim())).toMatchObject({ widgetId: WID_ID, configured: 'view' });
+  });
+
+  it('configure-fields calls upsertFieldsWidget with widgetId merged', async () => {
+    const f = writeFile('cfg.json', {
+      groups: [{ id: 'g1', name: 'Contact', position: 0, isVisible: true, fields: [] }],
+      fields: [],
+    });
+    fetchStub.reply('/metadata', { data: { upsertFieldsWidget: { id: 'view-id' } } });
+    await runPl('widget', 'configure-fields', WID_ID, '--file', f);
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('upsertFieldsWidget(input: $input)');
+    expect(body(call).variables?.input).toMatchObject({
+      widgetId: WID_ID,
+      groups: [{ id: 'g1', name: 'Contact' }],
+    });
+  });
+
+  it('configure-view USAGE when file is not an object', async () => {
+    const f = writeFile('cfg.json', JSON.stringify(['array']));
+    const err = await runPl('widget', 'configure-view', WID_ID, '--file', f).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+});

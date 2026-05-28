@@ -389,6 +389,63 @@ function registerWidgetSubcommands(pl: Command): void {
       );
       emitOk(`reset widget ${id}`, data.resetPageLayoutWidgetToDefault as unknown as Record<string, unknown>, ctx.out);
     });
+
+  /*
+   * `configure-view` and `configure-fields` ship the upsertViewWidget /
+   * upsertFieldsWidget mutations that were deferred from v0.6 (Step 4).
+   * Both whole-list-replace the widget's content keyed by widgetId — same
+   * semantics as the v0.5 permission setters. Pass-through JSON; the
+   * caller's file supplies the arrays verbatim.
+   *
+   *   upsertViewWidget(input: { widgetId, viewFields[], viewFilters[],
+   *                              viewFilterGroups[], viewSorts[] }): View!
+   *   upsertFieldsWidget(input: { widgetId, groups[], fields[] }): View!
+   */
+  widget.command('configure-view <widgetId>')
+    .description('configure a VIEW widget\'s viewFields/viewFilters/viewSorts/viewFilterGroups')
+    .requiredOption(
+      '--file <path>',
+      'UpsertViewWidgetInput body (without widgetId — supplied by the arg)',
+    )
+    .action(async (widgetId: string, opts: { file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const loaded = loadInputFile<Record<string, unknown>>(opts.file);
+      if (Array.isArray(loaded) || typeof loaded !== 'object' || loaded === null) {
+        throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+      }
+      const input = { widgetId, ...loaded };
+      // upsertViewWidget returns View! — select just the id so we don't
+      // re-encode the widget union types.
+      await ctx.metadata.request<{ upsertViewWidget: { id: string } }>(
+        `mutation Configure($input: UpsertViewWidgetInput!) {
+           upsertViewWidget(input: $input) { id }
+         }`,
+        { input },
+      );
+      emitOk(`configured view widget ${widgetId}`, { widgetId, configured: 'view' }, ctx.out);
+    });
+
+  widget.command('configure-fields <widgetId>')
+    .description('configure a FIELDS widget\'s groups + fields')
+    .requiredOption(
+      '--file <path>',
+      'UpsertFieldsWidgetInput body (without widgetId — supplied by the arg)',
+    )
+    .action(async (widgetId: string, opts: { file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const loaded = loadInputFile<Record<string, unknown>>(opts.file);
+      if (Array.isArray(loaded) || typeof loaded !== 'object' || loaded === null) {
+        throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+      }
+      const input = { widgetId, ...loaded };
+      await ctx.metadata.request<{ upsertFieldsWidget: { id: string } }>(
+        `mutation Configure($input: UpsertFieldsWidgetInput!) {
+           upsertFieldsWidget(input: $input) { id }
+         }`,
+        { input },
+      );
+      emitOk(`configured fields widget ${widgetId}`, { widgetId, configured: 'fields' }, ctx.out);
+    });
 }
 
 function widgetColumns(ctx: Ctx): string[] {
