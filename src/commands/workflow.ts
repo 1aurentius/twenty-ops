@@ -59,6 +59,16 @@ interface TriggerFile {
 const WORKFLOW = `id name statuses lastPublishedVersionId`;
 const VERSION = `id name status workflowId trigger steps`;
 const RUN = `id name status workflowId workflowVersionId enqueuedAt startedAt endedAt`;
+const AUTOMATED_TRIGGER = `id workflowId type settings createdAt updatedAt`;
+
+interface WorkflowAutomatedTrigger {
+  id: string;
+  workflowId: string;
+  type: string;
+  settings: unknown;
+  createdAt: string;
+  updatedAt: string;
+}
 
 /** `twenty-ops workflow …` — manage workflows via the Core API. */
 export function registerWorkflowCommands(program: Command): void {
@@ -281,5 +291,134 @@ export function registerWorkflowCommands(program: Command): void {
         ['id', 'status', 'workflowId', 'workflowVersionId', 'startedAt', 'endedAt', 'state'],
         ctx.out,
       );
+    });
+
+  /*
+   * Automated triggers (DATABASE_EVENT or CRON) bind a workflow to an
+   * automatic firing source. They live as records on the Core API. Authoring
+   * a trigger does NOT activate the workflow — version activation
+   * (`activateWorkflowVersion`) is still unexposed on the pinned Twenty image,
+   * so the v0.6 surface is: inspect + create the trigger record, then
+   * activate the workflow version through the Twenty UI until a later image
+   * lifts the gate.
+   *
+   * Verified shapes (live probe):
+   *   createWorkflowAutomatedTrigger(data: WorkflowAutomatedTriggerCreateInput!,
+   *                                  upsert: Boolean): WorkflowAutomatedTrigger
+   *   updateWorkflowAutomatedTrigger(id: UUID!, data: ...UpdateInput!): ...
+   *   deleteWorkflowAutomatedTrigger(id: UUID!): ...
+   *   WorkflowAutomatedTriggerTypeEnum: DATABASE_EVENT | CRON
+   *   Required: settings(JSON!). Recommended: type, workflowId.
+   */
+  const trigger = wf
+    .command('trigger')
+    .description('manage workflow automated triggers (DATABASE_EVENT | CRON)');
+
+  trigger
+    .command('list <workflowId>')
+    .description("list a workflow's automated triggers")
+    .action(async (workflowId: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const data = await ctx.core.request<{
+        workflowAutomatedTriggers: Connection<WorkflowAutomatedTrigger>;
+      }>(
+        `query Triggers($id: UUID!) {
+           workflowAutomatedTriggers(filter: { workflowId: { eq: $id } }, first: 100) {
+             edges { node { ${AUTOMATED_TRIGGER} } }
+           }
+         }`,
+        { id: workflowId },
+      );
+      emitList(
+        data.workflowAutomatedTriggers.edges.map((e) => e.node),
+        ['id', 'workflowId', 'type', 'settings'],
+        ctx.out,
+      );
+    });
+
+  trigger
+    .command('get <triggerId>')
+    .description('show one automated trigger')
+    .action(async (triggerId: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const data = await ctx.core.request<{ workflowAutomatedTrigger: WorkflowAutomatedTrigger | null }>(
+        `query Trigger($id: UUID!) {
+           workflowAutomatedTrigger(filter: { id: { eq: $id } }) { ${AUTOMATED_TRIGGER} }
+         }`,
+        { id: triggerId },
+      );
+      if (!data.workflowAutomatedTrigger) {
+        throw new CliError(`workflow trigger "${triggerId}" not found`, EXIT.NOT_FOUND);
+      }
+      emitOne(
+        data.workflowAutomatedTrigger as unknown as Record<string, unknown>,
+        ['id', 'workflowId', 'type', 'settings', 'createdAt', 'updatedAt'],
+        ctx.out,
+      );
+    });
+
+  trigger
+    .command('create')
+    .description('create an automated trigger for a workflow')
+    .requiredOption('--workflow <id>', 'workflow id')
+    .requiredOption('--file <path>', 'WorkflowAutomatedTriggerCreateInput { type, settings, ... }')
+    .action(async (opts: { workflow: string; file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const loaded = loadInputFile<Record<string, unknown>>(opts.file);
+      if (Array.isArray(loaded) || typeof loaded !== 'object' || loaded === null) {
+        throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+      }
+      if (loaded.settings === undefined) {
+        throw new CliError(`${opts.file} must include "settings" (JSON, per Twenty's trigger shape)`, EXIT.USAGE);
+      }
+      const data = { workflowId: opts.workflow, ...loaded };
+      const res = await ctx.core.request<{ createWorkflowAutomatedTrigger: WorkflowAutomatedTrigger }>(
+        `mutation Create($data: WorkflowAutomatedTriggerCreateInput!) {
+           createWorkflowAutomatedTrigger(data: $data) { ${AUTOMATED_TRIGGER} }
+         }`,
+        { data },
+      );
+      emitOk(
+        `created workflow trigger ${res.createWorkflowAutomatedTrigger.id}`,
+        res.createWorkflowAutomatedTrigger as unknown as Record<string, unknown>,
+        ctx.out,
+      );
+    });
+
+  trigger
+    .command('update <triggerId>')
+    .description('update an automated trigger (e.g. change settings or type)')
+    .requiredOption('--file <path>', 'partial WorkflowAutomatedTriggerUpdateInput')
+    .action(async (triggerId: string, opts: { file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const update = loadInputFile<Record<string, unknown>>(opts.file);
+      if (Array.isArray(update) || typeof update !== 'object' || update === null) {
+        throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+      }
+      const res = await ctx.core.request<{ updateWorkflowAutomatedTrigger: WorkflowAutomatedTrigger }>(
+        `mutation Update($id: UUID!, $data: WorkflowAutomatedTriggerUpdateInput!) {
+           updateWorkflowAutomatedTrigger(id: $id, data: $data) { ${AUTOMATED_TRIGGER} }
+         }`,
+        { id: triggerId, data: update },
+      );
+      emitOk(
+        `updated workflow trigger ${triggerId}`,
+        res.updateWorkflowAutomatedTrigger as unknown as Record<string, unknown>,
+        ctx.out,
+      );
+    });
+
+  trigger
+    .command('delete <triggerId>')
+    .description('delete an automated trigger (soft-delete; can be restored via Core API)')
+    .action(async (triggerId: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      await ctx.core.request(
+        `mutation Delete($id: UUID!) {
+           deleteWorkflowAutomatedTrigger(id: $id) { id }
+         }`,
+        { id: triggerId },
+      );
+      emitOk(`deleted workflow trigger ${triggerId}`, { deleted: triggerId }, ctx.out);
     });
 }

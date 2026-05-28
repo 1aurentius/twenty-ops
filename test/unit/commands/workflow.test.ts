@@ -270,3 +270,67 @@ describe('workflow runs / run get', () => {
     expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
   });
 });
+
+describe('workflow trigger', () => {
+  const TRIGGER_ID = '44444444-4444-4444-8444-444444444444';
+  const TRIGGER = {
+    id: TRIGGER_ID, workflowId: WF_ID, type: 'CRON',
+    settings: { schedule: '0 0 * * *' },
+    createdAt: '2026-05-25T00:00:00Z', updatedAt: '2026-05-25T00:00:00Z',
+  };
+
+  it('list filters workflowAutomatedTriggers by workflowId', async () => {
+    fetchStub.reply('/graphql', { data: { workflowAutomatedTriggers: { edges: [{ node: TRIGGER }] } } });
+    const { stdout } = await runWf('trigger', 'list', WF_ID, '--json');
+    const rows = stdout.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l) as { id: string });
+    expect(rows[0]?.id).toBe(TRIGGER_ID);
+
+    const call = fetchStub.calls[0]!;
+    expect(call.url).toBe('http://localhost:3001/graphql');
+    expect(body(call).variables).toEqual({ id: WF_ID });
+  });
+
+  it('get NOT_FOUND when workflowAutomatedTrigger is null', async () => {
+    fetchStub.reply('/graphql', { data: { workflowAutomatedTrigger: null } });
+    const err = await runWf('trigger', 'get', TRIGGER_ID).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
+  });
+
+  it('create requires settings in the file (USAGE otherwise)', async () => {
+    const file = writeFile('bad.json', JSON.stringify({ type: 'CRON' }));
+    const err = await runWf('trigger', 'create', '--workflow', WF_ID, '--file', file).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('create merges --workflow into the file data and calls core endpoint', async () => {
+    const file = writeFile('good.json', JSON.stringify({
+      type: 'CRON',
+      settings: { schedule: '*/5 * * * *' },
+    }));
+    fetchStub.reply('/graphql', { data: { createWorkflowAutomatedTrigger: TRIGGER } });
+    await runWf('trigger', 'create', '--workflow', WF_ID, '--file', file, '--json');
+    const call = fetchStub.calls[0]!;
+    expect(call.url).toBe('http://localhost:3001/graphql');
+    expect(body(call).variables?.data).toMatchObject({
+      workflowId: WF_ID,
+      type: 'CRON',
+      settings: { schedule: '*/5 * * * *' },
+    });
+  });
+
+  it('update sends the file as data via (id, data) arg shape', async () => {
+    const file = writeFile('patch.json', JSON.stringify({ settings: { schedule: '0 12 * * *' } }));
+    fetchStub.reply('/graphql', { data: { updateWorkflowAutomatedTrigger: TRIGGER } });
+    await runWf('trigger', 'update', TRIGGER_ID, '--file', file);
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('updateWorkflowAutomatedTrigger(id: $id, data: $data)');
+    expect(body(call).variables).toMatchObject({ id: TRIGGER_ID, data: { settings: { schedule: '0 12 * * *' } } });
+  });
+
+  it('delete calls deleteWorkflowAutomatedTrigger with just the id', async () => {
+    fetchStub.reply('/graphql', { data: { deleteWorkflowAutomatedTrigger: { id: TRIGGER_ID } } });
+    await runWf('trigger', 'delete', TRIGGER_ID);
+    const call = fetchStub.calls[0]!;
+    expect(body(call).variables).toEqual({ id: TRIGGER_ID });
+  });
+});
