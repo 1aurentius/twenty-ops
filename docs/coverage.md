@@ -47,6 +47,9 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `page-layout widget` (CRUD + reset)           | yes     | ✓ | ✓ (server-gated on configuration type) |  |
 | `page-layout widget configure-view/-fields`   | yes     | ✓ |        |           |
 | `dashboard` (CRUD + restore)                  | yes     | ✓ | ✓     |           |
+| `skill` (CRUD + activate/deactivate)          | yes     | ✓ | ✓     |           |
+| `agent` (CRUD + role binding + turns)         | yes     | ✓ | ✓ (server-gated on AI model availability) |  |
+| `chat` (thread management)                    | yes     | ✓ | ✓ (AUTH-gated; user context required) |  |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 | **Framework: seed automation**| n/a     | n/a  | ✓ (verified) | n/a      |
@@ -55,11 +58,11 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 
 | Domain                              | API status | Phase |
 |-------------------------------------|------------|-------|
-| Workflow steps + activation         | Blocked on Twenty image     | v0.8+ |
-| Connected accounts + channels       | OAuth-coupled creation      | v0.8 |
-| Blocklists                          | Stable, small surface       | v0.8 |
-| AI agents + skills + chat threads   | Stable, niche               | stretch |
+| Workflow steps + activation         | Blocked on Twenty image     | v0.9+ |
+| Connected accounts + channels       | OAuth-coupled creation      | v0.9 |
+| Blocklists                          | Stable, small surface       | v0.9 |
+| `chat send` + `uploadAiChatFile`    | Streaming + multipart        | v0.9 |
 | SSO + custom/public/emailing domains | Stable, enterprise-focused | stretch |
 | Application registrations + marketplace | Stable, publishers only | stretch |
 | Front components + command menu items | Stable, UI extensibility | stretch |
-| `page-layout sync --file`           | Uses updatePageLayoutWithTabsAndWidgets | v0.8 |
+| `page-layout sync --file`           | Uses updatePageLayoutWithTabsAndWidgets | v0.9 |

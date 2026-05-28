@@ -28,7 +28,7 @@ const program = new Command();
 program
   .name('twenty-ops')
   .description('Token-efficient CLI for managing a live Twenty CRM workspace.')
-  .version('0.7.0')
+  .version('0.8.0')
   .showHelpAfterError('(run with --help for usage)')
   // Global flags — available on every subcommand via optsWithGlobals().
   .option('--remote <name>', 'workspace remote to use (default: config defaultRemote)')

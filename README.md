@@ -2,14 +2,14 @@
 
 A token-efficient command-line interface for managing a **live [Twenty](https://twenty.com) CRM workspace** — built for command-line AI agents (Claude Code and the like) doing forward deployment of client CRMs.
 
-> **Status:** v0.7. 20 command groups covering schema-as-code (objects,
+> **Status:** v0.8. 23 command groups covering schema-as-code (objects,
 > fields), records, views + navigation + groups, workflows + automated
 > triggers, team setup (roles, members, invitations, permissions), API
 > keys, webhooks, workspace settings (read+write), server-side
 > programmability (logic functions), record-detail and dashboard page
 > layouts (page-layout / tab / widget + view + fields widget upserts),
-> and workspace dashboards. See [`docs/coverage.md`](docs/coverage.md)
-> for what's mapped vs deferred.
+> workspace dashboards, and AI features (agents, skills, chat threads).
+> See [`docs/coverage.md`](docs/coverage.md) for what's mapped vs deferred.
 
 ## Why a CLI?
 
@@ -160,6 +160,23 @@ dashboard   list [--limit N] [--starting-after <cursor>]
             get <id> | create --file f.json | update <id> --file f.json
             delete <id>                           # soft-delete
             restore <id>
+
+skill       list | get <ref>                      ref = id or unique name
+            create --file f.json | update <ref> --file f.json | delete <ref>
+            activate <ref> | deactivate <ref>
+
+agent       list | get <ref> | create --file f.json
+            update <ref> --file f.json | delete <ref>
+            set-role --agent <ref> --role <ref>
+            clear-role --agent <ref>
+            turns <agentId>                       # list past reasoning turns
+            evaluate <turnId>                     # re-run evaluation (LLM cost)
+            stop-stream <threadId>
+
+chat        list | get <threadId>
+            create | rename <threadId> --title <text>
+            archive <threadId> | unarchive <threadId> | delete <threadId>
+            messages <threadId>                   # user-context only on this build
 ```
 
 `--object` accepts an `objectMetadataId` **or** an object name
@@ -322,6 +339,57 @@ twenty-ops dashboard create --file dashboard.json --json
 > `page-layout tab reset` / `page-layout widget reset` only work on stock
 > Twenty layouts. Custom layouts return `"Custom page layout … cannot be
 > reset to default"` — delete + recreate instead.
+
+### AI agents + skills + chat
+
+Define agents, attach skills, inspect their reasoning history:
+
+```bash
+# 1) Author a skill (active by default after create)
+cat > skill.json <<'EOF'
+{ "name": "summarizeLeads",
+  "label": "Summarize Leads",
+  "description": "Condense a list of leads into a one-paragraph brief.",
+  "content": "You are a sales analyst. Given a JSON array of leads,
+              return a 3-sentence summary highlighting the top opportunity." }
+EOF
+twenty-ops skill create --file skill.json --json
+twenty-ops skill list
+
+# Deactivate / reactivate without deleting
+twenty-ops skill deactivate summarizeLeads
+twenty-ops skill activate summarizeLeads
+
+# 2) Create a workspace agent (requires a configured model in the stack)
+cat > agent.json <<'EOF'
+{ "name": "salesAssistant",
+  "label": "Sales Assistant",
+  "description": "Helps reps triage incoming leads.",
+  "prompt": "You are a sales assistant. Be concise.",
+  "modelId": "gpt-4o-mini" }
+EOF
+twenty-ops agent create --file agent.json --json
+twenty-ops agent set-role --agent salesAssistant --role "Sales Ops"
+
+# 3) Inspect past reasoning turns
+twenty-ops agent turns <agentId> --json
+twenty-ops agent evaluate <turnId>     # re-runs LLM evaluation (cost-bearing)
+```
+
+> **AI feature gates**: `agent create` requires a model configured in the
+> workspace (the seeded test stack rejects with `"The selected model is
+> not available in this workspace."` — production stacks tie this to the
+> Twenty Cloud billing tier).
+>
+> **Chat threads are user-context only**: every `chat` command (read AND
+> write) returns `EXIT.AUTH` with `"This endpoint requires a user
+> context. API keys are not supported."` against the current build. The
+> CLI's wire shapes are correct; agents that need to drive chat threads
+> programmatically need a user-token remote, not an API-key remote.
+>
+> **Deferred to v0.9**: `chat send` (sendChatMessage — streaming
+> responses) and `uploadAiChatFile` (multipart upload) need separate
+> design and are not in v0.8.
 
 ### Example: an agent setting up a view
 
