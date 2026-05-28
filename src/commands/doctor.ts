@@ -102,6 +102,14 @@ export function registerDoctorCommand(program: Command): void {
         return `${rows.length} record${rows.length === 1 ? '' : 's'} reachable via REST`;
       });
 
+      await runner.run('logic-functions-reachable', 'metadata API exposes findManyLogicFunctions', async () => {
+        const data = await ctx.metadata.request<{ findManyLogicFunctions: { id: string }[] }>(
+          `query { findManyLogicFunctions { id } }`,
+        );
+        const rows = data.findManyLogicFunctions;
+        return `${rows.length} logic function${rows.length === 1 ? '' : 's'} discoverable`;
+      });
+
       // --objects-list is now superseded by records-round-trip — accept it as a
       // no-op for one release to avoid breaking pre-v0.4 callers / scripts.
       void opts.objectsList;

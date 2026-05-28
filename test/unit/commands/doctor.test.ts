@@ -94,6 +94,8 @@ function scriptHappyPath(): void {
   fetchStub.reply('/metadata', { data: { deleteView: true } });
   // step 5: records round-trip — REST GET /rest/people?limit=1
   fetchStub.reply('/rest/people', { data: { people: [] } });
+  // step 6: findManyLogicFunctions
+  fetchStub.reply('/metadata', { data: { findManyLogicFunctions: [] } });
 }
 
 describe('doctor command', () => {
@@ -107,6 +109,7 @@ describe('doctor command', () => {
     expect(stdout).toContain('[OK  ] live schema matches the committed snapshot');
     expect(stdout).toContain('[OK  ] create-read-delete a throwaway view on `person`');
     expect(stdout).toContain('[OK  ] list `person` records via REST');
+    expect(stdout).toContain('[OK  ] metadata API exposes findManyLogicFunctions');
     expect(stdout).toContain('doctor: OK');
     expect(stderr).toBe('');
 
@@ -132,7 +135,7 @@ describe('doctor command', () => {
     expect(summary.remote).toBe('test');
     expect(summary.apiUrl).toBe('http://localhost:3001');
     expect(summary.steps.map((s) => s.key)).toEqual([
-      'remote', 'whoami', 'schema-drift', 'view-round-trip', 'records-round-trip',
+      'remote', 'whoami', 'schema-drift', 'view-round-trip', 'records-round-trip', 'logic-functions-reachable',
     ]);
     expect(summary.steps.every((s) => s.status === 'ok')).toBe(true);
   });

@@ -17,6 +17,7 @@ describe.skipIf(!INTEGRATION)('doctor integration', () => {
     expect(stdout).toContain('[OK  ] live schema matches the committed snapshot');
     expect(stdout).toContain('[OK  ] create-read-delete a throwaway view on `person`');
     expect(stdout).toContain('[OK  ] list `person` records via REST');
+    expect(stdout).toContain('[OK  ] metadata API exposes findManyLogicFunctions');
     expect(stdout).toContain('doctor: OK');
   });
 
@@ -35,6 +36,7 @@ describe.skipIf(!INTEGRATION)('doctor integration', () => {
       'schema-drift:ok',
       'view-round-trip:ok',
       'records-round-trip:ok',
+      'logic-functions-reachable:ok',
     ]);
   });
 });
