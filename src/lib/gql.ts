@@ -31,6 +31,13 @@ export const WEBHOOK_SUMMARY = `id targetUrl operations description secret creat
 /** Role — RBAC identity record. */
 export const ROLE_SUMMARY = `id label description icon canBeAssignedToUsers canBeAssignedToApiKeys isEditable`;
 
+/** Logic function — server-side TypeScript source bound to a handler.  */
+export const LOGIC_FUNCTION_SUMMARY = `
+  id name description runtime timeoutSeconds
+  sourceHandlerPath handlerName applicationId
+  createdAt updatedAt
+`;
+
 /** Workspace member — `name` is a nested FullName object. */
 export const MEMBER_SUMMARY = `
   id userEmail

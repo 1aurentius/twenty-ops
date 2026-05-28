@@ -4,6 +4,7 @@ import { registerApiKeyCommands } from './commands/api-key.js';
 import { registerDoctorCommand } from './commands/doctor.js';
 import { registerFieldCommands } from './commands/field.js';
 import { registerInvitationCommands } from './commands/invitation.js';
+import { registerLogicFunctionCommands } from './commands/logic-function.js';
 import { registerMemberCommands } from './commands/member.js';
 import { registerNavCommands } from './commands/nav.js';
 import { registerObjectCommands } from './commands/object.js';
@@ -46,6 +47,7 @@ registerRoleCommands(program);
 registerMemberCommands(program);
 registerInvitationCommands(program);
 registerPermissionCommands(program);
+registerLogicFunctionCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();
