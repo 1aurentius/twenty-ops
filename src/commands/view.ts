@@ -2,7 +2,16 @@ import type { Command } from 'commander';
 import { CliError, EXIT } from '../api/errors.js';
 import type { GraphQLClient } from '../api/graphql-client.js';
 import { makeCtx, type Ctx } from '../lib/context.js';
-import { VIEW_DETAIL, VIEW_FIELD, VIEW_FILTER, VIEW_SORT, VIEW_SUMMARY } from '../lib/gql.js';
+import {
+  VIEW_DETAIL,
+  VIEW_FIELD,
+  VIEW_FIELD_GROUP,
+  VIEW_FILTER,
+  VIEW_FILTER_GROUP,
+  VIEW_GROUP,
+  VIEW_SORT,
+  VIEW_SUMMARY,
+} from '../lib/gql.js';
 import { expectArray, loadInputFile } from '../lib/input-file.js';
 import { resolveObjectId } from '../lib/objects.js';
 import { emitList, emitOk, emitOne } from '../lib/output.js';
@@ -36,6 +45,27 @@ interface ViewSort {
   id: string;
   fieldMetadataId: string;
   direction: string;
+}
+interface ViewGroup {
+  id: string;
+  isVisible: boolean;
+  fieldValue: string;
+  position: number;
+  viewId: string;
+}
+interface ViewFilterGroup {
+  id: string;
+  parentViewFilterGroupId: string | null;
+  logicalOperator: string;
+  positionInViewFilterGroup: number | null;
+  viewId: string;
+}
+interface ViewFieldGroup {
+  id: string;
+  name: string;
+  position: number;
+  isVisible: boolean;
+  viewId: string;
 }
 
 /** `twenty-ops view …` — manage table/board/calendar views via the Metadata API. */
@@ -174,6 +204,9 @@ export function registerViewCommands(program: Command): void {
   registerSetFields(view);
   registerSetFilters(view);
   registerSetSorts(view);
+  registerSetGroups(view);
+  registerSetFilterGroups(view);
+  registerSetFieldGroups(view);
 }
 
 /* --------------------------------------------------------------------------
@@ -349,6 +382,203 @@ function registerSetSorts(view: Command): void {
           ),
       });
       emitReconcile('sorts', viewId, result, ctx);
+    });
+}
+
+function registerSetGroups(view: Command): void {
+  view
+    .command('set-groups <viewId>')
+    .description("reconcile a view's groups (kanban-style fieldValue buckets)")
+    .requiredOption('--file <path>', 'array of {fieldValue,isVisible?,position?}')
+    .action(async (viewId: string, opts: { file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const desired = expectArray(loadInputFile(opts.file), opts.file);
+      const data = await ctx.metadata.request<{ getViewGroups: ViewGroup[] }>(
+        `query Groups($viewId: String!) { getViewGroups(viewId: $viewId) { ${VIEW_GROUP} } }`,
+        { viewId },
+      );
+
+      const result = await reconcile<ViewGroup>({
+        desired,
+        current: data.getViewGroups,
+        keyOfDesired: (d) => requireString(d, 'fieldValue', opts.file),
+        keyOfCurrent: (c) => c.fieldValue,
+        changed: (c, d) =>
+          (d.isVisible !== undefined && d.isVisible !== c.isVisible) ||
+          (d.position !== undefined && d.position !== c.position),
+        create: (d) =>
+          ctx.metadata.request(
+            `mutation($input: CreateViewGroupInput!) { createViewGroup(input: $input) { id } }`,
+            {
+              input: {
+                viewId,
+                fieldValue: d.fieldValue,
+                isVisible: d.isVisible ?? true,
+                position: d.position,
+              },
+            },
+          ),
+        update: (c, d) =>
+          ctx.metadata.request(
+            `mutation($input: UpdateViewGroupInput!) { updateViewGroup(input: $input) { id } }`,
+            {
+              input: {
+                id: c.id,
+                update: pruneUndefined({
+                  isVisible: d.isVisible,
+                  position: d.position,
+                  fieldValue: d.fieldValue,
+                }),
+              },
+            },
+          ),
+        remove: (c) =>
+          ctx.metadata.request(
+            `mutation($input: DeleteViewGroupInput!) { deleteViewGroup(input: $input) { id } }`,
+            { input: { id: c.id } },
+          ),
+      });
+      emitReconcile('groups', viewId, result, ctx);
+    });
+}
+
+function registerSetFilterGroups(view: Command): void {
+  view
+    .command('set-filter-groups <viewId>')
+    .description("reconcile a view's filter groups (AND/OR hierarchy)")
+    .requiredOption(
+      '--file <path>',
+      'array of {parentViewFilterGroupId?,logicalOperator,positionInViewFilterGroup?}',
+    )
+    .action(async (viewId: string, opts: { file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const desired = expectArray(loadInputFile(opts.file), opts.file);
+      const data = await ctx.metadata.request<{ getViewFilterGroups: ViewFilterGroup[] }>(
+        `query Q($viewId: String!) {
+           getViewFilterGroups(viewId: $viewId) { ${VIEW_FILTER_GROUP} }
+         }`,
+        { viewId },
+      );
+
+      // Tree-shaped reconcile: key by (parent, position). The same key function
+      // applies to both sides so a current group with id "fg-root" matches a
+      // desired entry that omits id but pins the same (parent, position).
+      const filterGroupKey = (parent: unknown, pos: unknown): string =>
+        `${parent ?? 'root'}@${pos ?? 0}`;
+
+      const result = await reconcile<ViewFilterGroup>({
+        desired,
+        current: data.getViewFilterGroups,
+        keyOfDesired: (d) =>
+          filterGroupKey(d.parentViewFilterGroupId, d.positionInViewFilterGroup),
+        keyOfCurrent: (c) =>
+          filterGroupKey(c.parentViewFilterGroupId, c.positionInViewFilterGroup),
+        changed: (c, d) =>
+          (d.logicalOperator !== undefined && d.logicalOperator !== c.logicalOperator) ||
+          (d.positionInViewFilterGroup !== undefined &&
+            d.positionInViewFilterGroup !== c.positionInViewFilterGroup) ||
+          (d.parentViewFilterGroupId !== undefined &&
+            d.parentViewFilterGroupId !== c.parentViewFilterGroupId),
+        create: (d) =>
+          ctx.metadata.request(
+            `mutation($input: CreateViewFilterGroupInput!) {
+               createViewFilterGroup(input: $input) { id }
+             }`,
+            {
+              input: pruneUndefined({
+                viewId,
+                parentViewFilterGroupId: d.parentViewFilterGroupId,
+                logicalOperator: d.logicalOperator ?? 'AND',
+                positionInViewFilterGroup: d.positionInViewFilterGroup,
+              }),
+            },
+          ),
+        update: (c, d) =>
+          ctx.metadata.request(
+            `mutation($id: String!, $input: UpdateViewFilterGroupInput!) {
+               updateViewFilterGroup(id: $id, input: $input) { id }
+             }`,
+            {
+              id: c.id,
+              input: pruneUndefined({
+                parentViewFilterGroupId: d.parentViewFilterGroupId,
+                logicalOperator: d.logicalOperator,
+                positionInViewFilterGroup: d.positionInViewFilterGroup,
+              }),
+            },
+          ),
+        remove: (c) =>
+          ctx.metadata.request(
+            `mutation($id: String!) { deleteViewFilterGroup(id: $id) }`,
+            { id: c.id },
+          ),
+      });
+      emitReconcile('filter-groups', viewId, result, ctx);
+    });
+}
+
+function registerSetFieldGroups(view: Command): void {
+  view
+    .command('set-field-groups <viewId>')
+    .description("reconcile a view's field groups (collapsible section labels)")
+    .requiredOption('--file <path>', 'array of {name,position?,isVisible?}')
+    .action(async (viewId: string, opts: { file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const desired = expectArray(loadInputFile(opts.file), opts.file);
+      const data = await ctx.metadata.request<{ getViewFieldGroups: ViewFieldGroup[] }>(
+        `query Q($viewId: String!) {
+           getViewFieldGroups(viewId: $viewId) { ${VIEW_FIELD_GROUP} }
+         }`,
+        { viewId },
+      );
+
+      const result = await reconcile<ViewFieldGroup>({
+        desired,
+        current: data.getViewFieldGroups,
+        keyOfDesired: (d) => requireString(d, 'name', opts.file),
+        keyOfCurrent: (c) => c.name,
+        changed: (c, d) =>
+          (d.position !== undefined && d.position !== c.position) ||
+          (d.isVisible !== undefined && d.isVisible !== c.isVisible),
+        create: (d) =>
+          ctx.metadata.request(
+            `mutation($input: CreateViewFieldGroupInput!) {
+               createViewFieldGroup(input: $input) { id }
+             }`,
+            {
+              input: pruneUndefined({
+                viewId,
+                name: d.name,
+                position: d.position,
+                isVisible: d.isVisible,
+              }),
+            },
+          ),
+        update: (c, d) =>
+          ctx.metadata.request(
+            `mutation($input: UpdateViewFieldGroupInput!) {
+               updateViewFieldGroup(input: $input) { id }
+             }`,
+            {
+              input: {
+                id: c.id,
+                update: pruneUndefined({
+                  name: d.name,
+                  position: d.position,
+                  isVisible: d.isVisible,
+                }),
+              },
+            },
+          ),
+        remove: (c) =>
+          ctx.metadata.request(
+            `mutation($input: DeleteViewFieldGroupInput!) {
+               deleteViewFieldGroup(input: $input) { id }
+             }`,
+            { input: { id: c.id } },
+          ),
+      });
+      emitReconcile('field-groups', viewId, result, ctx);
     });
 }
 

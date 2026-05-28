@@ -299,3 +299,105 @@ describe('view set-sorts', () => {
     });
   });
 });
+
+describe('view set-groups', () => {
+  it('creates each fieldValue that does not exist yet', async () => {
+    const file = writeFile('groups.json', JSON.stringify([
+      { fieldValue: 'ACTIVE', isVisible: true, position: 0 },
+      { fieldValue: 'DONE', isVisible: true, position: 1 },
+    ]));
+    fetchStub.reply('/metadata', { data: { getViewGroups: [] } });
+    fetchStub.reply('/metadata', { data: { createViewGroup: { id: 'g1' } } });
+    fetchStub.reply('/metadata', { data: { createViewGroup: { id: 'g2' } } });
+
+    const { stdout } = await runView('set-groups', VIEW_ID, '--file', file);
+    expect(stdout).toContain('+2 ~0 -0 =0');
+    expect(body(fetchStub.calls[1]!).query).toContain('createViewGroup');
+  });
+
+  it('updates when position differs, deletes orphans, leaves matches unchanged', async () => {
+    const file = writeFile('groups.json', JSON.stringify([
+      { fieldValue: 'ACTIVE', position: 0, isVisible: true },
+      { fieldValue: 'DONE', position: 5, isVisible: true }, // position changed
+    ]));
+    fetchStub.reply('/metadata', {
+      data: {
+        getViewGroups: [
+          { id: 'g1', fieldValue: 'ACTIVE', isVisible: true, position: 0, viewId: VIEW_ID },
+          { id: 'g2', fieldValue: 'DONE', isVisible: true, position: 1, viewId: VIEW_ID },
+          { id: 'g3', fieldValue: 'ARCHIVED', isVisible: true, position: 2, viewId: VIEW_ID },
+        ],
+      },
+    });
+    fetchStub.reply('/metadata', { data: { updateViewGroup: { id: 'g2' } } });
+    fetchStub.reply('/metadata', { data: { deleteViewGroup: { id: 'g3' } } });
+
+    const { stdout } = await runView('set-groups', VIEW_ID, '--file', file);
+    expect(stdout).toContain('+0 ~1 -1 =1');
+  });
+
+  it('rejects entries missing fieldValue with USAGE', async () => {
+    const file = writeFile('bad.json', JSON.stringify([{ isVisible: true }]));
+    fetchStub.reply('/metadata', { data: { getViewGroups: [] } });
+    const err = await runView('set-groups', VIEW_ID, '--file', file).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+});
+
+describe('view set-field-groups', () => {
+  it('keys by name; creates new + updates position changes + removes missing', async () => {
+    const file = writeFile('fg.json', JSON.stringify([
+      { name: 'Contact', position: 0 },         // matches existing exactly
+      { name: 'Employer', position: 5 },        // position changed
+      { name: 'NewSection', position: 2 },      // new
+    ]));
+    fetchStub.reply('/metadata', {
+      data: {
+        getViewFieldGroups: [
+          { id: 'fg1', name: 'Contact', position: 0, isVisible: true, viewId: VIEW_ID },
+          { id: 'fg2', name: 'Employer', position: 1, isVisible: true, viewId: VIEW_ID },
+          { id: 'fg3', name: 'Stale', position: 2, isVisible: true, viewId: VIEW_ID },
+        ],
+      },
+    });
+    fetchStub.reply('/metadata', { data: { updateViewFieldGroup: { id: 'fg2' } } });
+    fetchStub.reply('/metadata', { data: { createViewFieldGroup: { id: 'fg4' } } });
+    fetchStub.reply('/metadata', { data: { deleteViewFieldGroup: { id: 'fg3' } } });
+
+    const { stdout } = await runView('set-field-groups', VIEW_ID, '--file', file);
+    expect(stdout).toContain('+1 ~1 -1 =1');
+  });
+});
+
+describe('view set-filter-groups', () => {
+  it('keys by (parent, position); creates new and updates logicalOperator changes', async () => {
+    const file = writeFile('flt.json', JSON.stringify([
+      { parentViewFilterGroupId: null, positionInViewFilterGroup: 0, logicalOperator: 'AND' },
+      // child group under a root id we don't know yet → expect a create
+      { parentViewFilterGroupId: 'fg-parent', positionInViewFilterGroup: 0, logicalOperator: 'OR' },
+    ]));
+    fetchStub.reply('/metadata', {
+      data: {
+        getViewFilterGroups: [
+          {
+            id: 'fg-root',
+            parentViewFilterGroupId: null,
+            logicalOperator: 'OR', // differs → update
+            positionInViewFilterGroup: 0,
+            viewId: VIEW_ID,
+          },
+        ],
+      },
+    });
+    fetchStub.reply('/metadata', { data: { updateViewFilterGroup: { id: 'fg-root' } } });
+    fetchStub.reply('/metadata', { data: { createViewFilterGroup: { id: 'fg-child' } } });
+
+    const { stdout } = await runView('set-filter-groups', VIEW_ID, '--file', file);
+    expect(stdout).toContain('+1 ~1 -0 =0');
+
+    // Update mutation uses `(id, input)` shape rather than `{id, update}` wrapper.
+    const updCall = fetchStub.calls[1]!;
+    expect(body(updCall).query).toContain('updateViewFilterGroup(id: $id');
+    expect(body(updCall).variables?.id).toBe('fg-root');
+  });
+});

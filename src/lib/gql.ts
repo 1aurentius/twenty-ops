@@ -6,6 +6,13 @@ export const VIEW_FIELD = `id fieldMetadataId isVisible size position`;
 export const VIEW_FILTER = `id fieldMetadataId operand value subFieldName`;
 export const VIEW_SORT = `id fieldMetadataId direction`;
 
+/** View group — distinct value of a kanban/grouping field. Keyed by `fieldValue` per view. */
+export const VIEW_GROUP = `id isVisible fieldValue position viewId`;
+/** View filter group — hierarchical AND/OR container for filters. */
+export const VIEW_FILTER_GROUP = `id parentViewFilterGroupId logicalOperator positionInViewFilterGroup viewId`;
+/** View field group — collapsible section of fields. Keyed by `name` per view. */
+export const VIEW_FIELD_GROUP = `id name position isVisible viewId`;
+
 /** Full view detail — summary plus its widgets. */
 export const VIEW_DETAIL = `
   ${VIEW_SUMMARY}

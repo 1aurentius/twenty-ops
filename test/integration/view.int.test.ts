@@ -106,6 +106,47 @@ describe.skipIf(!INTEGRATION)('view integration', () => {
     expect(JSON.parse(r2.stdout.trim())).toMatchObject({ created: 0, updated: 0, deleted: 0, unchanged: 1 });
   });
 
+  it('set-field-groups reconciles named sections, idempotently', async () => {
+    const created = await runView('create', '--object', 'person', '--name', `${TAG}-fldgrp`, '--json');
+    const viewId = (JSON.parse(created.stdout.trim()) as { id: string }).id;
+    cleanup.push(viewId);
+
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const file = join(mkdtempSync(join(tmpdir(), 'view-int-')), 'field-groups.json');
+    writeFileSync(file, JSON.stringify([
+      { name: 'Section A', position: 0, isVisible: true },
+      { name: 'Section B', position: 1, isVisible: true },
+    ]));
+
+    const r1 = await runView('set-field-groups', viewId, '--file', file, '--json');
+    expect(JSON.parse(r1.stdout.trim())).toMatchObject({ what: 'field-groups', created: 2, updated: 0, deleted: 0 });
+
+    const r2 = await runView('set-field-groups', viewId, '--file', file, '--json');
+    expect(JSON.parse(r2.stdout.trim())).toMatchObject({ created: 0, updated: 0, deleted: 0, unchanged: 2 });
+  });
+
+  it('set-filter-groups creates root + child groups, idempotently', async () => {
+    const created = await runView('create', '--object', 'person', '--name', `${TAG}-fltgrp`, '--json');
+    const viewId = (JSON.parse(created.stdout.trim()) as { id: string }).id;
+    cleanup.push(viewId);
+
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const file = join(mkdtempSync(join(tmpdir(), 'view-int-')), 'filter-groups.json');
+    writeFileSync(file, JSON.stringify([
+      { parentViewFilterGroupId: null, positionInViewFilterGroup: 0, logicalOperator: 'AND' },
+    ]));
+
+    const r1 = await runView('set-filter-groups', viewId, '--file', file, '--json');
+    expect(JSON.parse(r1.stdout.trim())).toMatchObject({ what: 'filter-groups', created: 1, updated: 0, deleted: 0 });
+
+    const r2 = await runView('set-filter-groups', viewId, '--file', file, '--json');
+    expect(JSON.parse(r2.stdout.trim())).toMatchObject({ created: 0, updated: 0, deleted: 0, unchanged: 1 });
+  });
+
   it('returns NOT_FOUND for a bogus view id', async () => {
     const err = await runView('get', '00000000-0000-4000-8000-000000000000').catch((e: unknown) => e);
     expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
