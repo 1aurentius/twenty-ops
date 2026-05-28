@@ -214,3 +214,96 @@ describe('page-layout tab update/delete/reset', () => {
     expect(body(fetchStub.calls[0]!).query).toContain('resetPageLayoutTabToDefault(id: $id)');
   });
 });
+
+const WID_ID = '44444444-4444-4444-8444-444444444444';
+const WID = {
+  id: WID_ID, title: 'Recent activity', type: 'VIEW', pageLayoutTabId: TAB_ID,
+  objectMetadataId: OBJ_ID,
+  conditionalDisplay: null, conditionalAvailabilityExpression: null,
+  isActive: true, createdAt: '2026-05-25T00:00:00Z', updatedAt: '2026-05-25T00:00:00Z',
+};
+
+describe('page-layout widget list/get', () => {
+  it('list calls getPageLayoutWidgets with the tab id', async () => {
+    fetchStub.reply('/metadata', { data: { getPageLayoutWidgets: [WID] } });
+    const { stdout } = await runPl('widget', 'list', TAB_ID, '--json');
+    const rows = stdout.trim().split('\n').filter(Boolean).map((l) => JSON.parse(l) as { id: string });
+    expect(rows[0]?.id).toBe(WID_ID);
+    expect(body(fetchStub.calls[0]!).variables).toEqual({ id: TAB_ID });
+  });
+
+  it('get NOT_FOUND when getPageLayoutWidget returns null', async () => {
+    fetchStub.reply('/metadata', { data: { getPageLayoutWidget: null } });
+    const err = await runPl('widget', 'get', WID_ID).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
+  });
+});
+
+describe('page-layout widget create', () => {
+  const GP = { row: 0, column: 0, rowSpan: 4, columnSpan: 6 };
+
+  it('USAGE when title is missing', async () => {
+    const f = writeFile('w.json', { type: 'VIEW', gridPosition: GP, configuration: {} });
+    const err = await runPl('widget', 'create', '--tab', TAB_ID, '--file', f).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('USAGE when type is missing', async () => {
+    const f = writeFile('w.json', { title: 'Hi', gridPosition: GP, configuration: {} });
+    const err = await runPl('widget', 'create', '--tab', TAB_ID, '--file', f).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('USAGE when gridPosition is missing', async () => {
+    const f = writeFile('w.json', { title: 'Hi', type: 'VIEW', configuration: {} });
+    const err = await runPl('widget', 'create', '--tab', TAB_ID, '--file', f).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('USAGE when configuration is missing', async () => {
+    const f = writeFile('w.json', { title: 'Hi', type: 'VIEW', gridPosition: GP });
+    const err = await runPl('widget', 'create', '--tab', TAB_ID, '--file', f).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('merges --tab into the input as pageLayoutTabId', async () => {
+    const f = writeFile('w.json', {
+      title: 'Recent activity', type: 'VIEW',
+      gridPosition: GP, configuration: { viewId: 'abc' },
+    });
+    fetchStub.reply('/metadata', { data: { createPageLayoutWidget: WID } });
+    await runPl('widget', 'create', '--tab', TAB_ID, '--file', f, '--json');
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('createPageLayoutWidget(input: $input)');
+    expect(body(call).variables?.input).toMatchObject({
+      pageLayoutTabId: TAB_ID,
+      title: 'Recent activity',
+      type: 'VIEW',
+      gridPosition: GP,
+      configuration: { viewId: 'abc' },
+    });
+  });
+});
+
+describe('page-layout widget update/delete/reset', () => {
+  it('update uses (id, input) shape', async () => {
+    const f = writeFile('patch.json', { title: 'Renamed' });
+    fetchStub.reply('/metadata', { data: { updatePageLayoutWidget: WID } });
+    await runPl('widget', 'update', WID_ID, '--file', f);
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('updatePageLayoutWidget(id: $id, input: $input)');
+    expect(body(call).variables).toEqual({ id: WID_ID, input: { title: 'Renamed' } });
+  });
+
+  it('delete calls destroyPageLayoutWidget', async () => {
+    fetchStub.reply('/metadata', { data: { destroyPageLayoutWidget: true } });
+    await runPl('widget', 'delete', WID_ID);
+    expect(body(fetchStub.calls[0]!).query).toContain('destroyPageLayoutWidget(id: $id)');
+  });
+
+  it('reset calls resetPageLayoutWidgetToDefault', async () => {
+    fetchStub.reply('/metadata', { data: { resetPageLayoutWidgetToDefault: WID } });
+    await runPl('widget', 'reset', WID_ID);
+    expect(body(fetchStub.calls[0]!).query).toContain('resetPageLayoutWidgetToDefault(id: $id)');
+  });
+});

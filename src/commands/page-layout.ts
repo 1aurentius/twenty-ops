@@ -1,7 +1,7 @@
 import type { Command } from 'commander';
 import { CliError, EXIT } from '../api/errors.js';
 import { makeCtx, type Ctx } from '../lib/context.js';
-import { PAGE_LAYOUT_SUMMARY, PAGE_LAYOUT_TAB_SUMMARY } from '../lib/gql.js';
+import { PAGE_LAYOUT_SUMMARY, PAGE_LAYOUT_TAB_SUMMARY, PAGE_LAYOUT_WIDGET_SUMMARY } from '../lib/gql.js';
 import { loadInputFile } from '../lib/input-file.js';
 import { resolveObjectId } from '../lib/objects.js';
 import { emitList, emitOk, emitOne } from '../lib/output.js';
@@ -134,6 +134,7 @@ export function registerPageLayoutCommands(program: Command): void {
     });
 
   registerTabSubcommands(pl);
+  registerWidgetSubcommands(pl);
 }
 
 interface PageLayoutTabNode {
@@ -251,6 +252,148 @@ function registerTabSubcommands(pl: Command): void {
 function tabColumns(ctx: Ctx): string[] {
   if (ctx.out.json) return [];
   return ['id', 'title', 'position', 'pageLayoutId', 'layoutMode'];
+}
+
+interface PageLayoutWidgetNode {
+  id: string;
+  title: string;
+  type: string;
+  pageLayoutTabId: string;
+  objectMetadataId: string | null;
+  conditionalDisplay: unknown;
+  conditionalAvailabilityExpression: string | null;
+  isActive: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+function registerWidgetSubcommands(pl: Command): void {
+  const widget = pl.command('widget').description('manage widgets inside a tab');
+
+  widget.command('list <pageLayoutTabId>')
+    .description("list widgets on a tab")
+    .action(async (pageLayoutTabId: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const data = await ctx.metadata.request<{ getPageLayoutWidgets: PageLayoutWidgetNode[] }>(
+        `query Widgets($id: String!) {
+           getPageLayoutWidgets(pageLayoutTabId: $id) { ${PAGE_LAYOUT_WIDGET_SUMMARY} }
+         }`,
+        { id: pageLayoutTabId },
+      );
+      emitList(data.getPageLayoutWidgets, widgetColumns(ctx), ctx.out);
+    });
+
+  widget.command('get <widgetId>')
+    .description('show one widget')
+    .action(async (id: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const data = await ctx.metadata.request<{ getPageLayoutWidget: PageLayoutWidgetNode | null }>(
+        `query Widget($id: String!) {
+           getPageLayoutWidget(id: $id) { ${PAGE_LAYOUT_WIDGET_SUMMARY} }
+         }`,
+        { id },
+      );
+      if (!data.getPageLayoutWidget) {
+        throw new CliError(`page layout widget "${id}" not found`, EXIT.NOT_FOUND);
+      }
+      emitOne(
+        data.getPageLayoutWidget as unknown as Record<string, unknown>,
+        widgetColumns(ctx),
+        ctx.out,
+      );
+    });
+
+  widget.command('create')
+    .description('create a widget inside a tab')
+    .requiredOption('--tab <id>', 'parent page-layout tab id')
+    .requiredOption(
+      '--file <path>',
+      'CreatePageLayoutWidgetInput { title, type(WidgetType!), gridPosition!, configuration!(JSON), objectMetadataId?, position? }',
+    )
+    .action(async (opts: { tab: string; file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const loaded = loadInputFile<Record<string, unknown>>(opts.file);
+      if (Array.isArray(loaded) || typeof loaded !== 'object' || loaded === null) {
+        throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+      }
+      if (typeof loaded.title !== 'string') {
+        throw new CliError(`${opts.file} is missing required field "title"`, EXIT.USAGE);
+      }
+      if (typeof loaded.type !== 'string') {
+        throw new CliError(`${opts.file} is missing required field "type" (WidgetType enum)`, EXIT.USAGE);
+      }
+      if (typeof loaded.gridPosition !== 'object' || loaded.gridPosition === null) {
+        throw new CliError(
+          `${opts.file} is missing required field "gridPosition" {row,column,rowSpan,columnSpan}`,
+          EXIT.USAGE,
+        );
+      }
+      if (loaded.configuration === undefined) {
+        throw new CliError(
+          `${opts.file} is missing required field "configuration" (JSON; per-widget-type shape)`,
+          EXIT.USAGE,
+        );
+      }
+      const input = { pageLayoutTabId: opts.tab, ...loaded };
+      const data = await ctx.metadata.request<{ createPageLayoutWidget: PageLayoutWidgetNode }>(
+        `mutation Create($input: CreatePageLayoutWidgetInput!) {
+           createPageLayoutWidget(input: $input) { ${PAGE_LAYOUT_WIDGET_SUMMARY} }
+         }`,
+        { input },
+      );
+      emitOk(
+        `created widget ${data.createPageLayoutWidget.id} (${data.createPageLayoutWidget.title})`,
+        data.createPageLayoutWidget as unknown as Record<string, unknown>,
+        ctx.out,
+      );
+    });
+
+  widget.command('update <widgetId>')
+    .description('update a widget from a JSON/YAML file')
+    .requiredOption('--file <path>', 'partial UpdatePageLayoutWidgetInput')
+    .action(async (id: string, opts: { file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const input = loadInputFile<Record<string, unknown>>(opts.file);
+      if (Array.isArray(input) || typeof input !== 'object' || input === null) {
+        throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+      }
+      const data = await ctx.metadata.request<{ updatePageLayoutWidget: PageLayoutWidgetNode }>(
+        `mutation Update($id: String!, $input: UpdatePageLayoutWidgetInput!) {
+           updatePageLayoutWidget(id: $id, input: $input) { ${PAGE_LAYOUT_WIDGET_SUMMARY} }
+         }`,
+        { id, input },
+      );
+      emitOk(`updated widget ${id}`, data.updatePageLayoutWidget as unknown as Record<string, unknown>, ctx.out);
+    });
+
+  widget.command('delete <widgetId>')
+    .description('hard-delete a widget (no soft-delete)')
+    .action(async (id: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      await ctx.metadata.request(
+        `mutation Destroy($id: String!) { destroyPageLayoutWidget(id: $id) }`,
+        { id },
+      );
+      emitOk(`deleted widget ${id}`, { deleted: id }, ctx.out);
+    });
+
+  widget.command('reset <widgetId>')
+    .description('revert a widget to its default (stock layouts only)')
+    .action(async (id: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const data = await ctx.metadata.request<{ resetPageLayoutWidgetToDefault: PageLayoutWidgetNode }>(
+        `mutation Reset($id: String!) {
+           resetPageLayoutWidgetToDefault(id: $id) { ${PAGE_LAYOUT_WIDGET_SUMMARY} }
+         }`,
+        { id },
+      );
+      emitOk(`reset widget ${id}`, data.resetPageLayoutWidgetToDefault as unknown as Record<string, unknown>, ctx.out);
+    });
+}
+
+function widgetColumns(ctx: Ctx): string[] {
+  if (ctx.out.json) return [];
+  return ['id', 'title', 'type', 'pageLayoutTabId', 'objectMetadataId'];
 }
 
 interface PageLayoutNode {

@@ -53,10 +53,18 @@ export const PAGE_LAYOUT_TAB_SUMMARY = `
   id title position pageLayoutId icon layoutMode isActive createdAt updatedAt
 `;
 
-/** Widget inside a tab. `type` is the WidgetType enum; `configuration` is JSON. */
+/**
+ * Widget inside a tab. `type` is the WidgetType enum.
+ *
+ * `position` and `configuration` are GraphQL unions (each widget type has its
+ * own concrete type — PageLayoutWidgetGridPosition / ViewConfiguration / etc.),
+ * so they're omitted from this summary. CRUD writes the input shapes directly;
+ * downstream readers fetch the typed records via the Twenty UI or a dedicated
+ * widget-type-specific query.
+ */
 export const PAGE_LAYOUT_WIDGET_SUMMARY = `
   id title type pageLayoutTabId objectMetadataId
-  position configuration conditionalDisplay conditionalAvailabilityExpression
+  conditionalDisplay conditionalAvailabilityExpression
   isActive createdAt updatedAt
 `;
 

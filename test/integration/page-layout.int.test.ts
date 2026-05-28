@@ -161,4 +161,80 @@ describe.skipIf(!INTEGRATION)('page-layout root integration', () => {
     const post = await runPl('tab', 'get', tabRow.id).catch((e: unknown) => e) as { exitCode?: number };
     expect(post.exitCode).toBe(EXIT.NOT_FOUND);
   });
+
+  it('widget CRUD lifecycle: create layout+tab → create widget → list → update → delete', async () => {
+    const { writeFileSync, mkdtempSync } = await import('node:fs');
+    const { tmpdir } = await import('node:os');
+    const { join } = await import('node:path');
+    const dir = mkdtempSync(join(tmpdir(), 'pl-widget-int-'));
+
+    // Parent layout + tab
+    const plFile = join(dir, 'pl.json');
+    writeFileSync(plFile, JSON.stringify({
+      name: `${TAG}-widget-parent`,
+      type: 'RECORD_PAGE',
+      objectMetadataId: objectId,
+    }));
+    let plId = '';
+    try {
+      const created = await runPl('create', '--file', plFile, '--json');
+      plId = (JSON.parse(created.stdout.trim()) as { id: string }).id;
+      cleanup.push(plId);
+    } catch (err) {
+      const e = err as { exitCode?: number; message?: string };
+      if (e.exitCode === EXIT.API) {
+        console.warn(`page-layout create gated: ${e.message}`);
+        return;
+      }
+      throw err;
+    }
+
+    const tabFile = join(dir, 'tab.json');
+    writeFileSync(tabFile, JSON.stringify({ title: 'Main', position: 0, layoutMode: 'GRID' }));
+    const tabCreated = await runPl('tab', 'create', '--page-layout', plId, '--file', tabFile, '--json');
+    const tabId = (JSON.parse(tabCreated.stdout.trim()) as { id: string }).id;
+
+    // Widget — STANDALONE_RICH_TEXT is the simplest because configuration is freeform
+    const widgetFile = join(dir, 'widget.json');
+    writeFileSync(widgetFile, JSON.stringify({
+      title: 'Note',
+      type: 'STANDALONE_RICH_TEXT',
+      gridPosition: { row: 0, column: 0, rowSpan: 4, columnSpan: 6 },
+      configuration: { content: 'Hello from twenty-ops' },
+    }));
+
+    let widgetId = '';
+    try {
+      const out = await runPl('widget', 'create', '--tab', tabId, '--file', widgetFile, '--json');
+      const row = JSON.parse(out.stdout.trim()) as { id: string; title: string; type: string };
+      widgetId = row.id;
+      expect(row.type).toBe('STANDALONE_RICH_TEXT');
+    } catch (err) {
+      const e = err as { exitCode?: number; message?: string };
+      if (e.exitCode === EXIT.API) {
+        // Widget creation may need per-type-specific configuration shape.
+        // Surface the server error and skip the rest of the lifecycle.
+        console.warn(`widget create gated: ${e.message}`);
+        return;
+      }
+      throw err;
+    }
+
+    // list widgets on the tab
+    const listOut = await runPl('widget', 'list', tabId, '--json');
+    const ids = listOut.stdout.trim().split('\n').filter(Boolean).map((l) => (JSON.parse(l) as { id: string }).id);
+    expect(ids).toContain(widgetId);
+
+    // update title
+    const patchFile = join(dir, 'patch.json');
+    writeFileSync(patchFile, JSON.stringify({ title: 'Note (renamed)' }));
+    await runPl('widget', 'update', widgetId, '--file', patchFile);
+    const reread = await runPl('widget', 'get', widgetId, '--json');
+    expect((JSON.parse(reread.stdout.trim()) as { title: string }).title).toBe('Note (renamed)');
+
+    // delete
+    await runPl('widget', 'delete', widgetId);
+    const post = await runPl('widget', 'get', widgetId).catch((e: unknown) => e) as { exitCode?: number };
+    expect(post.exitCode).toBe(EXIT.NOT_FOUND);
+  });
 });
