@@ -8,6 +8,7 @@ import { registerLogicFunctionCommands } from './commands/logic-function.js';
 import { registerMemberCommands } from './commands/member.js';
 import { registerNavCommands } from './commands/nav.js';
 import { registerObjectCommands } from './commands/object.js';
+import { registerPageLayoutCommands } from './commands/page-layout.js';
 import { registerPermissionCommands } from './commands/permission.js';
 import { registerRecordCommands } from './commands/record.js';
 import { registerRemoteCommands } from './commands/remote.js';
@@ -48,6 +49,7 @@ registerMemberCommands(program);
 registerInvitationCommands(program);
 registerPermissionCommands(program);
 registerLogicFunctionCommands(program);
+registerPageLayoutCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();

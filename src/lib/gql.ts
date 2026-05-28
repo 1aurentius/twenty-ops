@@ -45,6 +45,26 @@ export const LOGIC_FUNCTION_SUMMARY = `
   createdAt updatedAt
 `;
 
+/** Page layout — RECORD_INDEX / RECORD_PAGE / DASHBOARD / STANDALONE_PAGE. */
+export const PAGE_LAYOUT_SUMMARY = `id name type objectMetadataId createdAt updatedAt`;
+
+/** Tab inside a page layout. `layoutMode` = GRID | VERTICAL_LIST | CANVAS. */
+export const PAGE_LAYOUT_TAB_SUMMARY = `
+  id title position pageLayoutId icon layoutMode isActive createdAt updatedAt
+`;
+
+/** Widget inside a tab. `type` is the WidgetType enum; `configuration` is JSON. */
+export const PAGE_LAYOUT_WIDGET_SUMMARY = `
+  id title type pageLayoutTabId objectMetadataId
+  position configuration conditionalDisplay conditionalAvailabilityExpression
+  isActive createdAt updatedAt
+`;
+
+/** Dashboard — core record visible in Twenty's "Dashboards" section. */
+export const DASHBOARD_SUMMARY = `
+  id title position pageLayoutId createdAt updatedAt
+`;
+
 /** Workspace member — `name` is a nested FullName object. */
 export const MEMBER_SUMMARY = `
   id userEmail
