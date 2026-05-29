@@ -2,6 +2,7 @@ import { Command, CommanderError } from 'commander';
 import { CliError, EXIT } from './api/errors.js';
 import { registerAgentCommands } from './commands/agent.js';
 import { registerApiKeyCommands } from './commands/api-key.js';
+import { registerCalendarChannelCommands } from './commands/calendar-channel.js';
 import { registerChatCommands } from './commands/chat.js';
 import { registerConnectedAccountCommands } from './commands/connected-account.js';
 import { registerMessageChannelCommands } from './commands/message-channel.js';
@@ -62,6 +63,7 @@ registerAgentCommands(program);
 registerChatCommands(program);
 registerConnectedAccountCommands(program);
 registerMessageChannelCommands(program);
+registerCalendarChannelCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();
