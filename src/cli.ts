@@ -4,6 +4,7 @@ import { registerAgentCommands } from './commands/agent.js';
 import { registerApiKeyCommands } from './commands/api-key.js';
 import { registerChatCommands } from './commands/chat.js';
 import { registerConnectedAccountCommands } from './commands/connected-account.js';
+import { registerMessageChannelCommands } from './commands/message-channel.js';
 import { registerDashboardCommands } from './commands/dashboard.js';
 import { registerDoctorCommand } from './commands/doctor.js';
 import { registerFieldCommands } from './commands/field.js';
@@ -60,6 +61,7 @@ registerSkillCommands(program);
 registerAgentCommands(program);
 registerChatCommands(program);
 registerConnectedAccountCommands(program);
+registerMessageChannelCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();
