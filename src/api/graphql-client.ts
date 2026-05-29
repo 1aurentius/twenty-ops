@@ -81,7 +81,7 @@ function exitCodeForGraphQLError(errors: GraphQLError[]): typeof EXIT[keyof type
   if (codes.includes('NOT_FOUND')) return EXIT.NOT_FOUND;
 
   const m = errors.map((e) => e.message).join(' ').toLowerCase();
-  if (/unauthor|forbidden|no payload|jwt|expired|unauthenticated|authentication|invalid token/.test(m)) {
+  if (/unauthor|forbidden|no payload|jwt|expired|unauthenticated|authentication|invalid token|user context/.test(m)) {
     return EXIT.AUTH;
   }
   if (/not found|does not exist/.test(m)) return EXIT.NOT_FOUND;

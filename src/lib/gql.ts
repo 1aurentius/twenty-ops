@@ -103,6 +103,54 @@ export const CHAT_THREAD_SUMMARY = `
   lastMessageAt createdAt updatedAt
 `;
 
+/**
+ * Connected account (core API) — workspace member's email/calendar OAuth
+ * binding. Tokens are deliberately omitted from the summary (secrets); use
+ * --fields to surface them when needed for debugging.
+ */
+export const CONNECTED_ACCOUNT_SUMMARY = `
+  id handle provider accountOwnerId
+  handleAliases authFailedAt lastCredentialsRefreshedAt
+  createdAt updatedAt
+`;
+
+/**
+ * Connected account (metadata API) — `myConnectedAccounts` returns a
+ * different shape (`ConnectedAccountDTO`) without `accountOwnerId` but with
+ * `userWorkspaceId`, `name`, `visibility`, and `lastSignedInAt`.
+ */
+export const CONNECTED_ACCOUNT_DTO_SUMMARY = `
+  id handle provider name visibility
+  userWorkspaceId connectionProviderId applicationId
+  handleAliases authFailedAt lastCredentialsRefreshedAt lastSignedInAt
+  createdAt updatedAt
+`;
+
+/**
+ * Message channel — per-mailbox inbound sync settings + status.
+ * `handle` is the email address; `type` distinguishes Gmail/Outlook/etc.
+ */
+export const MESSAGE_CHANNEL_SUMMARY = `
+  id handle type visibility connectedAccountId
+  isSyncEnabled syncStatus syncStage syncedAt
+  isContactAutoCreationEnabled contactAutoCreationPolicy
+  excludeNonProfessionalEmails excludeGroupEmails
+  createdAt updatedAt
+`;
+
+/** Calendar channel — per-calendar inbound sync settings + status. */
+export const CALENDAR_CHANNEL_SUMMARY = `
+  id handle visibility connectedAccountId
+  isSyncEnabled syncStatus syncStage syncedAt
+  isContactAutoCreationEnabled contactAutoCreationPolicy
+  createdAt updatedAt
+`;
+
+/** Blocklist entry — `handle` is the address to filter for `workspaceMemberId`. */
+export const BLOCKLIST_SUMMARY = `
+  id handle workspaceMemberId createdAt updatedAt
+`;
+
 /** Workspace member — `name` is a nested FullName object. */
 export const MEMBER_SUMMARY = `
   id userEmail
