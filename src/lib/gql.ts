@@ -151,6 +151,21 @@ export const BLOCKLIST_SUMMARY = `
   id handle workspaceMemberId createdAt updatedAt
 `;
 
+/** SSO identity provider summary (OIDC or SAML). */
+export const SSO_PROVIDER_SUMMARY = `id name type status issuer`;
+
+/** Approved-access domain — invite-only signups allowed from a verified domain. */
+export const APPROVED_ACCESS_DOMAIN_SUMMARY = `id domain isValidated createdAt`;
+
+/** Public domain — workspace-facing custom domain (may be bound to an applicationId). */
+export const PUBLIC_DOMAIN_SUMMARY = `id domain isValidated applicationId createdAt`;
+
+/** Emailing domain — outbound email sender. `driver` is AWS_SES on this build. */
+export const EMAILING_DOMAIN_SUMMARY = `
+  id domain driver status verifiedAt createdAt updatedAt
+  verificationRecords { type key value priority }
+`;
+
 /** Workspace member — `name` is a nested FullName object. */
 export const MEMBER_SUMMARY = `
   id userEmail
