@@ -9,6 +9,7 @@ import { registerConnectedAccountCommands } from './commands/connected-account.j
 import { registerMessageChannelCommands } from './commands/message-channel.js';
 import { registerDashboardCommands } from './commands/dashboard.js';
 import { registerDoctorCommand } from './commands/doctor.js';
+import { registerDomainCommands } from './commands/domain.js';
 import { registerFieldCommands } from './commands/field.js';
 import { registerInvitationCommands } from './commands/invitation.js';
 import { registerLogicFunctionCommands } from './commands/logic-function.js';
@@ -68,6 +69,7 @@ registerMessageChannelCommands(program);
 registerCalendarChannelCommands(program);
 registerBlocklistCommands(program);
 registerSsoCommands(program);
+registerDomainCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();
