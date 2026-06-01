@@ -7,12 +7,14 @@ import { registerApplicationCommands } from './commands/application.js';
 import { registerBlocklistCommands } from './commands/blocklist.js';
 import { registerCalendarChannelCommands } from './commands/calendar-channel.js';
 import { registerChatCommands } from './commands/chat.js';
+import { registerCommandMenuItemCommands } from './commands/command-menu-item.js';
 import { registerConnectedAccountCommands } from './commands/connected-account.js';
 import { registerMessageChannelCommands } from './commands/message-channel.js';
 import { registerDashboardCommands } from './commands/dashboard.js';
 import { registerDoctorCommand } from './commands/doctor.js';
 import { registerDomainCommands } from './commands/domain.js';
 import { registerFieldCommands } from './commands/field.js';
+import { registerFrontComponentCommands } from './commands/front-component.js';
 import { registerInvitationCommands } from './commands/invitation.js';
 import { registerLogicFunctionCommands } from './commands/logic-function.js';
 import { registerMarketplaceCommands } from './commands/marketplace.js';
@@ -76,6 +78,8 @@ registerDomainCommands(program);
 registerAppRegistrationCommands(program);
 registerApplicationCommands(program);
 registerMarketplaceCommands(program);
+registerFrontComponentCommands(program);
+registerCommandMenuItemCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();

@@ -188,6 +188,23 @@ export const APPLICATION_SUMMARY = `
   settingsCustomTabFrontComponentId logo
 `;
 
+/** Front component — partner-authored React component embedded in Twenty UI. */
+export const FRONT_COMPONENT_SUMMARY = `
+  id name description componentName
+  sourceComponentPath builtComponentPath builtComponentChecksum
+  applicationId universalIdentifier isHeadless usesSdkClient
+  createdAt updatedAt
+`;
+
+/** Command menu item — entry in the workspace command palette (Cmd-K). */
+export const COMMAND_MENU_ITEM_SUMMARY = `
+  id label icon shortLabel position isPinned
+  engineComponentKey availabilityType availabilityObjectMetadataId
+  hotKeys conditionalAvailabilityExpression
+  workflowVersionId frontComponentId pageLayoutId
+  applicationId universalIdentifier createdAt updatedAt
+`;
+
 /** Workspace member — `name` is a nested FullName object. */
 export const MEMBER_SUMMARY = `
   id userEmail
