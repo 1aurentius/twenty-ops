@@ -50,6 +50,10 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `skill` (CRUD + activate/deactivate)          | yes     | ✓ | ✓     |           |
 | `agent` (CRUD + role binding + turns)         | yes     | ✓ | ✓ (server-gated on AI model availability) |  |
 | `chat` (thread management)                    | yes     | ✓ | ✓ (AUTH-gated; user context required) |  |
+| `connected-account` (CRUD + my + restore)     | yes     | ✓ | ✓ (`my` AUTH-gates; OAuth-coupled create) | |
+| `message-channel` (CRUD + restore)            | yes     | ✓ | ✓ (read paths; create OAuth-coupled) | |
+| `calendar-channel` (CRUD + restore)           | yes     | ✓ | ✓ (read paths; create OAuth-coupled) | |
+| `blocklist` (CRUD + restore)                  | yes     | ✓ | ✓ (read paths; create AUTH-gated server-side) | |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 | **Framework: seed automation**| n/a     | n/a  | ✓ (verified) | n/a      |
@@ -58,11 +62,11 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 
 | Domain                              | API status | Phase |
 |-------------------------------------|------------|-------|
-| Workflow steps + activation         | Blocked on Twenty image     | v0.9+ |
-| Connected accounts + channels       | OAuth-coupled creation      | v0.9 |
-| Blocklists                          | Stable, small surface       | v0.9 |
-| `chat send` + `uploadAiChatFile`    | Streaming + multipart        | v0.9 |
-| SSO + custom/public/emailing domains | Stable, enterprise-focused | stretch |
+| Workflow steps + activation         | Blocked on Twenty image     | v1.0+ |
+| `chat send` + `uploadAiChatFile`    | Streaming + multipart        | v1.0 |
+| SSO + custom/public/emailing domains | Stable, enterprise-focused | v1.0 |
 | Application registrations + marketplace | Stable, publishers only | stretch |
 | Front components + command menu items | Stable, UI extensibility | stretch |
-| `page-layout sync --file`           | Uses updatePageLayoutWithTabsAndWidgets | v0.9 |
+| `page-layout sync --file`           | Uses updatePageLayoutWithTabsAndWidgets | v1.0 |
+| Message folders + threads + participants | Read-only, derived | stretch |
+| Declarative `set-*` for blocklists  | Reconcile UX                | stretch |

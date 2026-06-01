@@ -2,14 +2,16 @@
 
 A token-efficient command-line interface for managing a **live [Twenty](https://twenty.com) CRM workspace** — built for command-line AI agents (Claude Code and the like) doing forward deployment of client CRMs.
 
-> **Status:** v0.8. 23 command groups covering schema-as-code (objects,
+> **Status:** v0.9. 27 command groups covering schema-as-code (objects,
 > fields), records, views + navigation + groups, workflows + automated
 > triggers, team setup (roles, members, invitations, permissions), API
 > keys, webhooks, workspace settings (read+write), server-side
 > programmability (logic functions), record-detail and dashboard page
 > layouts (page-layout / tab / widget + view + fields widget upserts),
-> workspace dashboards, and AI features (agents, skills, chat threads).
-> See [`docs/coverage.md`](docs/coverage.md) for what's mapped vs deferred.
+> workspace dashboards, AI features (agents, skills, chat threads),
+> and inbox + calendar integrations (connected accounts, message
+> channels, calendar channels, blocklists). See
+> [`docs/coverage.md`](docs/coverage.md) for what's mapped vs deferred.
 
 ## Why a CLI?
 
@@ -177,6 +179,28 @@ chat        list | get <threadId>
             create | rename <threadId> --title <text>
             archive <threadId> | unarchive <threadId> | delete <threadId>
             messages <threadId>                   # user-context only on this build
+
+connected-account
+            list [--limit N] [--starting-after <cursor>]
+            my                                    # myConnectedAccounts (user-context)
+            get <id>
+            create --file f.json                  # OAuth token required
+            update <id> --file f.json
+            delete <id> | destroy <id> | restore <id>
+
+message-channel
+            list [--limit N] [--starting-after <cursor>]
+            get <id> | create --file f.json | update <id> --file f.json
+            delete <id> | destroy <id> | restore <id>
+
+calendar-channel
+            list [--limit N] [--starting-after <cursor>]
+            get <id> | create --file f.json | update <id> --file f.json
+            delete <id> | destroy <id> | restore <id>
+
+blocklist   list [--limit N] [--starting-after <cursor>]
+            get <id> | create --file f.json | update <id> --file f.json
+            delete <id> | destroy <id> | restore <id>
 ```
 
 `--object` accepts an `objectMetadataId` **or** an object name
@@ -390,6 +414,52 @@ twenty-ops agent evaluate <turnId>     # re-runs LLM evaluation (cost-bearing)
 > **Deferred to v0.9**: `chat send` (sendChatMessage — streaming
 > responses) and `uploadAiChatFile` (multipart upload) need separate
 > design and are not in v0.8.
+
+### Inbox & calendar integrations
+
+Inspect connected accounts, toggle sync on a noisy message channel,
+add a blocklist entry — all without UI clicks:
+
+```bash
+# 1) See which OAuth bindings exist for the workspace
+twenty-ops connected-account list --json
+
+# 2) See which channels are syncing for an account
+twenty-ops message-channel list --json
+twenty-ops calendar-channel list --json
+
+# 3) Disable sync on a noisy channel without deleting it
+cat > toggle.json <<'EOF'
+{ "isSyncEnabled": false }
+EOF
+twenty-ops message-channel update <channelId> --file toggle.json
+
+# 4) Add a blocklist entry for a workspace member
+cat > entry.json <<'EOF'
+{ "handle": "noise@example.com",
+  "workspaceMemberId": "<memberId>" }
+EOF
+twenty-ops blocklist create --file entry.json
+
+# 5) Revoke (soft-delete) a connected account — restore brings it back
+twenty-ops connected-account delete <accountId>
+twenty-ops connected-account restore <accountId>
+```
+
+> **OAuth coupling**: `connected-account create` requires an
+> already-OAuth-issued `accessToken`/`refreshToken` in the input. The
+> CLI is a pass-through; the OAuth handshake itself runs in the
+> Twenty UI. Channel `create` is similarly OAuth-coupled (each
+> channel binds to a parent `connectedAccountId`).
+>
+> **User-context gates**: `connected-account my` and `blocklist
+> create` need a user-token actor — API keys get
+> `EXIT.AUTH` "user context required" / "User id is required". Read
+> paths (`list`/`get`) work with API keys on all four record types.
+>
+> **Tokens are redacted by default**: `CONNECTED_ACCOUNT_SUMMARY`
+> omits `accessToken`/`refreshToken`/`scopes`. Pass `--fields
+> accessToken,refreshToken,scopes` to surface them for debugging.
 
 ### Example: an agent setting up a view
 
