@@ -54,19 +54,28 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `message-channel` (CRUD + restore)            | yes     | ✓ | ✓ (read paths; create OAuth-coupled) | |
 | `calendar-channel` (CRUD + restore)           | yes     | ✓ | ✓ (read paths; create OAuth-coupled) | |
 | `blocklist` (CRUD + restore)                  | yes     | ✓ | ✓ (read paths; create AUTH-gated server-side) | |
+| `sso` (OIDC + SAML CRUD + set-status)         | yes     | ✓ | ✓ (server-side internal error pinned on list)  | |
+| `domain approved` (CRUD + validate)           | yes     | ✓ | ✓                                              | |
+| `domain public` (CRUD + check)                | yes     | ✓ | ✓                                              | |
+| `domain emailing` (CRUD + verify)             | yes     | ✓ | ✓                                              | |
+| `domain custom` (check)                       | yes     | ✓ | ✓                                              | |
+| `app-registration` (CRUD + rotate + transfer + variables) | yes | ✓ | ✓                          | |
+| `application` (install/uninstall/upgrade/sync + tokens) | yes | ✓ | ✓                          | |
+| `marketplace` (install + sync-catalog)        | yes     | ✓ |                                               | |
+| `front-component` (CRUD)                      | yes     | ✓ | ✓ (singular get AUTH-gated for API key)         | |
+| `command-menu-item` (CRUD)                    | yes     | ✓ | ✓                                              | |
+| `page-layout sync`                            | yes     | ✓ |                                                | |
+| `chat send` + `delete-queued-message`         | yes     | ✓ | ✓ (AUTH-gated, same as rest of chat)            | |
 | **Framework: schema drift**   | n/a     | ✓    | ✓           | n/a       |
 | **Framework: resolveRemote**  | n/a     | ✓    | n/a         | n/a       |
 | **Framework: seed automation**| n/a     | n/a  | ✓ (verified) | n/a      |
 
-## Not yet mapped
+## Not yet mapped (post-v1.0)
 
-| Domain                              | API status | Phase |
+| Domain                              | API status | Notes |
 |-------------------------------------|------------|-------|
-| Workflow steps + activation         | Blocked on Twenty image     | v1.0+ |
-| `chat send` + `uploadAiChatFile`    | Streaming + multipart        | v1.0 |
-| SSO + custom/public/emailing domains | Stable, enterprise-focused | v1.0 |
-| Application registrations + marketplace | Stable, publishers only | stretch |
-| Front components + command menu items | Stable, UI extensibility | stretch |
-| `page-layout sync --file`           | Uses updatePageLayoutWithTabsAndWidgets | v1.0 |
-| Message folders + threads + participants | Read-only, derived | stretch |
-| Declarative `set-*` for blocklists  | Reconcile UX                | stretch |
+| Workflow steps + activation         | Blocked on Twenty image     | `createWorkflowVersionStep`, `activateWorkflowVersion` etc. NOT exposed on the pinned image — schema-drift test will flag when they appear |
+| `uploadAiChatFile`                  | Multipart/form-data         | Requires extending GraphQLClient to support multipart; `chat send --file-ids` accepts pre-uploaded fileIds |
+| Message folders + threads + participants | Read-only, derived | Available via `record list <object>` against the REST endpoint |
+| Declarative `set-*` for blocklists / connected-accounts / channels | Reconcile UX | `reconcile<C>` is generic; v1.1+ candidate |
+| `updatePageLayoutTabsAndWidgets` nested-input schema | Pass-through | Detailed nested validation deferred to twenty-sdk |

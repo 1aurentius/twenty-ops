@@ -1,6 +1,6 @@
 {
   "name": "twenty-ops",
-  "version": "0.9.0",
+  "version": "1.0.0",
   "description": "Token-efficient CLI for managing a live Twenty CRM workspace (views, navigation, workflows) — built for command-line AI agents.",
   "license": "AGPL-3.0-only",
   "type": "module",

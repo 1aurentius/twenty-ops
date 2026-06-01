@@ -2,16 +2,21 @@
 
 A token-efficient command-line interface for managing a **live [Twenty](https://twenty.com) CRM workspace** — built for command-line AI agents (Claude Code and the like) doing forward deployment of client CRMs.
 
-> **Status:** v0.9. 27 command groups covering schema-as-code (objects,
-> fields), records, views + navigation + groups, workflows + automated
-> triggers, team setup (roles, members, invitations, permissions), API
-> keys, webhooks, workspace settings (read+write), server-side
-> programmability (logic functions), record-detail and dashboard page
-> layouts (page-layout / tab / widget + view + fields widget upserts),
-> workspace dashboards, AI features (agents, skills, chat threads),
-> and inbox + calendar integrations (connected accounts, message
-> channels, calendar channels, blocklists). See
-> [`docs/coverage.md`](docs/coverage.md) for what's mapped vs deferred.
+> **Status:** v1.0 — comprehensive Twenty CRM surface coverage. 35 command
+> groups across schema-as-code (objects, fields), records, views +
+> navigation + groups, workflows + automated triggers, team setup (roles,
+> members, invitations, permissions), API keys, webhooks, workspace
+> settings (read+write), server-side programmability (logic functions),
+> record-detail and dashboard page layouts (page-layout + tab + widget +
+> sync; configure-view/-fields), workspace dashboards, AI features
+> (agents, skills, chat threads with send + delete-queued), inbox +
+> calendar integrations (connected accounts, message channels, calendar
+> channels, blocklists), SSO identity providers (OIDC + SAML), domains
+> (approved-access, public, emailing, custom), application registrations
+> with rotate + transfer + variables, applications (install/uninstall/
+> upgrade/sync/tokens), marketplace, and UI extensibility (front
+> components + command menu items). See
+> [`docs/coverage.md`](docs/coverage.md) for the full mapping.
 
 ## Why a CLI?
 
@@ -201,6 +206,50 @@ calendar-channel
 blocklist   list [--limit N] [--starting-after <cursor>]
             get <id> | create --file f.json | update <id> --file f.json
             delete <id> | destroy <id> | restore <id>
+
+sso         list                                  getSSOIdentityProviders
+            create-oidc --file f.json             SetupOIDCSsoInput
+            create-saml --file f.json             SetupSAMLSsoInput
+            set-status <id> --status <Active|Inactive|Error>
+            delete <id>
+
+domain      approved list | create --domain --email | validate <id> --token | delete <id>
+            public   list | create --domain [--application]
+                     update --domain [--application] | delete --domain | check --domain
+            emailing list | create --domain [--driver] | verify <id> | delete <id>
+            custom   check                                 # zero-arg single-tenant DNS check
+
+app-registration
+            list | get <id>
+            find-by-client-id <clientId> | find-by-identifier <uid>
+            create --file f.json                  prints initial clientSecret
+            update <id> --file f.json | delete <id>
+            rotate-secret <id>                     returns new clientSecret
+            transfer-ownership <id> --target-subdomain <s>
+            tarball-url <id> | stats <id>
+            variable list/get/create/update/delete  (per-registration config slots)
+
+application list | get [--id <id>] [--identifier <ui>]
+            create-dev --identifier <ui> --name <n>
+            install --app-registration <id> [--version]
+            uninstall <universalIdentifier>
+            upgrade --app-registration <id> --target-version <v>
+            sync --file <manifest.json>            applies a workspace migration
+            generate-token <applicationId>         returns access + refresh tokens
+            renew-token --refresh-token <t>
+            set-variable --application --key --value
+            connection-providers <applicationId>
+
+marketplace install <universalIdentifier> [--version]
+            sync-catalog
+
+front-component
+            list | get <id>
+            create --file f.json | update <id> --file f.json | delete <id>
+
+command-menu-item
+            list | get <id>
+            create --file f.json | update <id> --file f.json | delete <id>
 ```
 
 `--object` accepts an `objectMetadataId` **or** an object name
@@ -460,6 +509,82 @@ twenty-ops connected-account restore <accountId>
 > **Tokens are redacted by default**: `CONNECTED_ACCOUNT_SUMMARY`
 > omits `accessToken`/`refreshToken`/`scopes`. Pass `--fields
 > accessToken,refreshToken,scopes` to surface them for debugging.
+
+### Enterprise — SSO + domains
+
+Stand up SSO and verified-domain handling for production deployments:
+
+```bash
+# 1) Configure an OIDC identity provider
+cat > okta.json <<'EOF'
+{ "name": "Okta", "issuer": "https://acme.okta.com",
+  "clientID": "<oidc-client-id>", "clientSecret": "<oidc-client-secret>" }
+EOF
+twenty-ops sso create-oidc --file okta.json --json
+
+# 2) Allow auto-join for everyone with an @acme.com email
+twenty-ops domain approved create --domain acme.com --email admin@acme.com
+# (server emails a validation token to admin@acme.com)
+twenty-ops domain approved validate <id> --token <TOKEN-FROM-EMAIL>
+
+# 3) Set up an outbound emailing domain
+twenty-ops domain emailing create --domain mail.acme.com --driver AWS_SES
+twenty-ops domain emailing verify <id>
+
+# 4) Check workspace custom-domain DNS records
+twenty-ops domain custom check --json
+```
+
+### Apps + marketplace + UI extensibility
+
+Build, register, and publish Twenty apps; install marketplace
+apps; extend the workspace UI with custom React components:
+
+```bash
+# Register a new OAuth application
+cat > app.json <<'EOF'
+{ "name": "Acme Sales Sync",
+  "universalIdentifier": "acme-sales-sync",
+  "oAuthRedirectUris": ["https://acme.com/oauth/cb"],
+  "oAuthScopes": ["openid", "profile", "email"] }
+EOF
+twenty-ops app-registration create --file app.json --json
+# → { applicationRegistration: {...}, clientSecret: "..." }   (STORE NOW)
+
+# Rotate the client secret + transfer ownership
+twenty-ops app-registration rotate-secret <id>
+twenty-ops app-registration transfer-ownership <id> --target-subdomain other-workspace
+
+# Configure per-registration variables (config slots)
+twenty-ops app-registration variable create \
+  --app-registration <id> --key API_KEY --value sk-xxx --secret
+
+# Install an app you just published
+twenty-ops application install --app-registration <id>
+twenty-ops application generate-token <applicationId>     # access + refresh
+
+# Install from the marketplace
+twenty-ops marketplace sync-catalog
+twenty-ops marketplace install twenty-app-acme
+
+# Register a custom Cmd-K command palette entry
+cat > menu.json <<'EOF'
+{ "label": "Open Sales Pipeline",
+  "engineComponentKey": "NAVIGATION",
+  "icon": "IconBriefcase",
+  "hotKeys": ["cmd", "shift", "p"] }
+EOF
+twenty-ops command-menu-item create --file menu.json
+```
+
+> **Workflow steps + activation remain unexposed**: as in v0.5–v0.9,
+> the pinned Twenty image does not expose `createWorkflowVersionStep`,
+> `activateWorkflowVersion`, etc. The schema-drift test will trip
+> automatically when a future image lifts the gate.
+>
+> **`uploadAiChatFile` deferred**: requires multipart/form-data which
+> the JSON-only GraphQL client doesn't yet support. `chat send
+> --file-ids` accepts pre-uploaded fileIds.
 
 ### Example: an agent setting up a view
 
