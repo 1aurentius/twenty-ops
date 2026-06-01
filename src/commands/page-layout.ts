@@ -133,6 +133,33 @@ export function registerPageLayoutCommands(program: Command): void {
       emitOk(`reset page layout ${id}`, data.resetPageLayoutToDefault as unknown as Record<string, unknown>, ctx.out);
     });
 
+  pl.command('sync <pageLayoutId>')
+    .description('declaratively replace a page layout + its tabs + widgets in one call')
+    .requiredOption('--file <path>', 'UpdatePageLayoutWithTabsInput { name, type, objectMetadataId?, tabs[] }')
+    .action(async (id: string, opts: { file: string }, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      const input = loadInputFile<Record<string, unknown>>(opts.file);
+      if (Array.isArray(input) || typeof input !== 'object' || input === null) {
+        throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+      }
+      for (const required of ['name', 'type', 'tabs']) {
+        if (input[required] === undefined) {
+          throw new CliError(`${opts.file} is missing required field "${required}"`, EXIT.USAGE);
+        }
+      }
+      const data = await ctx.metadata.request<{ updatePageLayoutWithTabsAndWidgets: PageLayoutNode }>(
+        `mutation Sync($id: String!, $input: UpdatePageLayoutWithTabsInput!) {
+           updatePageLayoutWithTabsAndWidgets(id: $id, input: $input) { ${PAGE_LAYOUT_SUMMARY} }
+         }`,
+        { id, input },
+      );
+      emitOk(
+        `synced page layout ${id} (whole tree)`,
+        data.updatePageLayoutWithTabsAndWidgets as unknown as Record<string, unknown>,
+        ctx.out,
+      );
+    });
+
   registerTabSubcommands(pl);
   registerWidgetSubcommands(pl);
 }

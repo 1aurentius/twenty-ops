@@ -145,6 +145,24 @@ describe('page-layout reset', () => {
   });
 });
 
+describe('page-layout sync', () => {
+  it('USAGE when required field is missing', async () => {
+    const f = writeFile('s.json', { name: 'X', type: 'RECORD_PAGE' }); // missing tabs
+    const err = await runPl('sync', PL_ID, '--file', f).catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('calls updatePageLayoutWithTabsAndWidgets with (id, input)', async () => {
+    fetchStub.reply('/metadata', { data: { updatePageLayoutWithTabsAndWidgets: PL } });
+    const f = writeFile('s.json', { name: 'X', type: 'RECORD_PAGE', tabs: [{ title: 'Main', widgets: [] }] });
+    await runPl('sync', PL_ID, '--file', f);
+    const call = fetchStub.calls[0]!;
+    expect(body(call).query).toContain('updatePageLayoutWithTabsAndWidgets(id: $id, input: $input)');
+    expect(body(call).variables?.input).toMatchObject({ name: 'X', type: 'RECORD_PAGE' });
+    expect((body(call).variables?.input as { tabs: unknown[] }).tabs).toHaveLength(1);
+  });
+});
+
 const TAB_ID = '33333333-3333-4333-8333-333333333333';
 const TAB = {
   id: TAB_ID, title: 'Overview', position: 0, pageLayoutId: PL_ID,

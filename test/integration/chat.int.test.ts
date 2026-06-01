@@ -67,4 +67,18 @@ describe.skipIf(!INTEGRATION)('chat integration (AUTH-gated for API keys)', () =
     ) as { exitCode?: number };
     expect(err.exitCode).toBe(EXIT.AUTH);
   });
+
+  it('send rejects API key actor with AUTH (same user-context constraint)', async () => {
+    const err = await runCh('send', '00000000-0000-4000-8000-000000000000', '--text', 'hi').catch(
+      (e: unknown) => e,
+    ) as { exitCode?: number };
+    expect(err.exitCode).toBe(EXIT.AUTH);
+  });
+
+  it('delete-queued-message rejects API key actor with AUTH', async () => {
+    const err = await runCh('delete-queued-message', '00000000-0000-4000-8000-000000000000').catch(
+      (e: unknown) => e,
+    ) as { exitCode?: number };
+    expect(err.exitCode).toBe(EXIT.AUTH);
+  });
 });

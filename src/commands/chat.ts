@@ -115,6 +115,62 @@ export function registerChatCommands(program: Command): void {
       emitOk(`deleted chat thread ${id}`, { deleted: id }, ctx.out);
     });
 
+  ch.command('send <threadId>')
+    .description('send a chat message to an agent thread; returns { messageId, queued, streamId? }')
+    .requiredOption('--text <text>', 'message text')
+    .option('--message-id <id>', 'client-generated message UUID (auto-generated if omitted)')
+    .option('--model <id>', 'modelId override')
+    .option('--browsing-context <json>', 'inline JSON browsing context')
+    .option('--file-ids <list>', 'comma-separated file IDs to attach (from `chat upload`)')
+    .action(async (
+      threadId: string,
+      opts: { text: string; messageId?: string; model?: string; browsingContext?: string; fileIds?: string },
+      cmd: Command,
+    ) => {
+      const ctx = makeCtx(cmd);
+      const messageId = opts.messageId ?? globalThis.crypto.randomUUID();
+      let browsingContext: unknown = undefined;
+      if (opts.browsingContext) {
+        try { browsingContext = JSON.parse(opts.browsingContext); }
+        catch { throw new CliError('--browsing-context is not valid JSON', EXIT.USAGE); }
+      }
+      const fileIds = opts.fileIds ? opts.fileIds.split(',').map((s) => s.trim()).filter(Boolean) : undefined;
+      const variables: Record<string, unknown> = {
+        threadId, text: opts.text, messageId,
+        browsingContext, modelId: opts.model, fileIds,
+      };
+      const data = await ctx.metadata.request<{
+        sendChatMessage: { messageId: string; queued: boolean; streamId: string | null };
+      }>(
+        `mutation Send(
+           $threadId: UUID!, $text: String!, $messageId: UUID!,
+           $browsingContext: JSON, $modelId: String, $fileIds: [UUID!]
+         ) {
+           sendChatMessage(
+             threadId: $threadId, text: $text, messageId: $messageId,
+             browsingContext: $browsingContext, modelId: $modelId, fileIds: $fileIds
+           ) { messageId queued streamId }
+         }`,
+        variables,
+      );
+      emitOk(
+        `sent chat message ${data.sendChatMessage.messageId}${data.sendChatMessage.queued ? ' (queued)' : ''}`,
+        data.sendChatMessage as unknown as Record<string, unknown>,
+        ctx.out,
+      );
+    });
+
+  ch.command('delete-queued-message <messageId>')
+    .description('delete a queued (not-yet-sent) chat message')
+    .action(async (messageId: string, _opts, cmd: Command) => {
+      const ctx = makeCtx(cmd);
+      await ctx.metadata.request(
+        `mutation DQ($messageId: UUID!) { deleteQueuedChatMessage(messageId: $messageId) }`,
+        { messageId },
+      );
+      emitOk(`deleted queued chat message ${messageId}`, { deleted: messageId }, ctx.out);
+    });
+
   ch.command('messages <threadId>')
     .description("list a chat thread's messages (id + role + summary)")
     .action(async (threadId: string, _opts, cmd: Command) => {

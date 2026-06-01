@@ -118,6 +118,44 @@ describe('chat archive/unarchive/delete', () => {
   });
 });
 
+describe('chat send', () => {
+  it('auto-generates a messageId when not supplied', async () => {
+    fetchStub.reply('/metadata', { data: { sendChatMessage: { messageId: 'auto', queued: false, streamId: 's1' } } });
+    await runCh('send', T_ID, '--text', 'hello');
+    const vars = body(fetchStub.calls[0]!).variables as { messageId: string };
+    expect(typeof vars.messageId).toBe('string');
+    expect(vars.messageId.length).toBeGreaterThan(8);
+  });
+
+  it('passes (threadId, text, messageId) and optional model/browsing/file-ids', async () => {
+    fetchStub.reply('/metadata', { data: { sendChatMessage: { messageId: 'm1', queued: true, streamId: null } } });
+    await runCh('send', T_ID, '--text', 'hi', '--message-id', 'msg-1',
+      '--model', 'gpt-4o-mini',
+      '--browsing-context', '{"page":"home"}',
+      '--file-ids', 'f1,f2');
+    const v = body(fetchStub.calls[0]!).variables as Record<string, unknown>;
+    expect(v.threadId).toBe(T_ID);
+    expect(v.text).toBe('hi');
+    expect(v.messageId).toBe('msg-1');
+    expect(v.modelId).toBe('gpt-4o-mini');
+    expect(v.browsingContext).toEqual({ page: 'home' });
+    expect(v.fileIds).toEqual(['f1', 'f2']);
+  });
+
+  it('USAGE when --browsing-context is not valid JSON', async () => {
+    const err = await runCh('send', T_ID, '--text', 'hi', '--browsing-context', 'not-json').catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+});
+
+describe('chat delete-queued-message', () => {
+  it('passes messageId', async () => {
+    fetchStub.reply('/metadata', { data: { deleteQueuedChatMessage: true } });
+    await runCh('delete-queued-message', 'm-pending');
+    expect(body(fetchStub.calls[0]!).variables).toEqual({ messageId: 'm-pending' });
+  });
+});
+
 describe('chat messages', () => {
   it('calls chatMessages(threadId)', async () => {
     fetchStub.reply('/metadata', { data: { chatMessages: [{ __typename: 'UserChatMessage', id: 'm1' }] } });
