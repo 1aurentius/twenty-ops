@@ -3,6 +3,7 @@ import { CliError, EXIT } from './api/errors.js';
 import { registerAgentCommands } from './commands/agent.js';
 import { registerApiKeyCommands } from './commands/api-key.js';
 import { registerAppRegistrationCommands } from './commands/app-registration.js';
+import { registerApplicationCommands } from './commands/application.js';
 import { registerBlocklistCommands } from './commands/blocklist.js';
 import { registerCalendarChannelCommands } from './commands/calendar-channel.js';
 import { registerChatCommands } from './commands/chat.js';
@@ -14,6 +15,7 @@ import { registerDomainCommands } from './commands/domain.js';
 import { registerFieldCommands } from './commands/field.js';
 import { registerInvitationCommands } from './commands/invitation.js';
 import { registerLogicFunctionCommands } from './commands/logic-function.js';
+import { registerMarketplaceCommands } from './commands/marketplace.js';
 import { registerMemberCommands } from './commands/member.js';
 import { registerNavCommands } from './commands/nav.js';
 import { registerObjectCommands } from './commands/object.js';
@@ -72,6 +74,8 @@ registerBlocklistCommands(program);
 registerSsoCommands(program);
 registerDomainCommands(program);
 registerAppRegistrationCommands(program);
+registerApplicationCommands(program);
+registerMarketplaceCommands(program);
 
 // Throw CommanderError instead of calling process.exit, so we control exit codes.
 program.exitOverride();
