@@ -166,6 +166,28 @@ export const EMAILING_DOMAIN_SUMMARY = `
   verificationRecords { type key value priority }
 `;
 
+/** Application registration — OAuth client + metadata that backs an installable app. */
+export const APPLICATION_REGISTRATION_SUMMARY = `
+  id name universalIdentifier oAuthClientId
+  oAuthRedirectUris oAuthScopes
+  ownerWorkspaceId sourceType sourcePackage latestAvailableVersion
+  isListed isFeatured isPreInstalled isConfigured logoUrl
+  createdAt updatedAt
+`;
+
+/** Application registration variable — typed config slot (string value, may be secret). */
+export const APPLICATION_REGISTRATION_VARIABLE_SUMMARY = `
+  id key description isSecret isRequired isFilled createdAt updatedAt
+`;
+
+/** Application — installed app instance within a workspace. */
+export const APPLICATION_SUMMARY = `
+  id name description version universalIdentifier
+  packageJsonChecksum yarnLockChecksum
+  applicationRegistrationId canBeUninstalled defaultRoleId
+  settingsCustomTabFrontComponentId logo
+`;
+
 /** Workspace member — `name` is a nested FullName object. */
 export const MEMBER_SUMMARY = `
   id userEmail
