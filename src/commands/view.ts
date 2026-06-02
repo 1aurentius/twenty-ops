@@ -441,6 +441,33 @@ function registerSetGroups(view: Command): void {
         { viewId },
       );
 
+      // Fast-path: when the view has no existing groups, batch all creates
+      // into a single createManyViewGroups call. For an agent populating a
+      // kanban field with 8 phases × 3 views, this turns 24 roundtrips into
+      // 3 — the exact bulk-setup flow our partners hit when porting from
+      // Asana/Trello.
+      if (data.getViewGroups.length === 0 && desired.length > 0) {
+        const inputs = desired.map((d, i) => ({
+          viewId,
+          fieldValue: requireString(d, 'fieldValue', opts.file),
+          isVisible: d.isVisible ?? true,
+          position: d.position ?? i,
+        }));
+        const bulk = await ctx.metadata.request<{ createManyViewGroups: { id: string }[] }>(
+          `mutation($inputs: [CreateViewGroupInput!]!) {
+             createManyViewGroups(inputs: $inputs) { id }
+           }`,
+          { inputs },
+        );
+        emitReconcile('groups', viewId, {
+          created: bulk.createManyViewGroups.length,
+          updated: 0,
+          deleted: 0,
+          unchanged: 0,
+        }, ctx);
+        return;
+      }
+
       const result = await reconcile<ViewGroup>({
         desired,
         current: data.getViewGroups,

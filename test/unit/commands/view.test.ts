@@ -423,18 +423,38 @@ describe('view set-sorts', () => {
 });
 
 describe('view set-groups', () => {
-  it('creates each fieldValue that does not exist yet', async () => {
+  it('fast-path: empty current → single createManyViewGroups call (not per-row)', async () => {
     const file = writeFile('groups.json', JSON.stringify([
       { fieldValue: 'ACTIVE', isVisible: true, position: 0 },
       { fieldValue: 'DONE', isVisible: true, position: 1 },
     ]));
     fetchStub.reply('/metadata', { data: { getViewGroups: [] } });
-    fetchStub.reply('/metadata', { data: { createViewGroup: { id: 'g1' } } });
-    fetchStub.reply('/metadata', { data: { createViewGroup: { id: 'g2' } } });
+    fetchStub.reply('/metadata', { data: { createManyViewGroups: [{ id: 'g1' }, { id: 'g2' }] } });
 
     const { stdout } = await runView('set-groups', VIEW_ID, '--file', file);
     expect(stdout).toContain('+2 ~0 -0 =0');
-    expect(body(fetchStub.calls[1]!).query).toContain('createViewGroup');
+    // Exactly 2 calls: getViewGroups + createManyViewGroups (no per-row createViewGroup)
+    expect(fetchStub.calls).toHaveLength(2);
+    expect(body(fetchStub.calls[1]!).query).toContain('createManyViewGroups');
+    expect(body(fetchStub.calls[1]!).query).not.toContain('createViewGroup(');
+    // Each input row has viewId, fieldValue, position (defaulted from index when omitted)
+    const inputs = body(fetchStub.calls[1]!).variables?.inputs as { viewId: string; fieldValue: string; position: number }[];
+    expect(inputs).toHaveLength(2);
+    expect(inputs[0]).toMatchObject({ viewId: VIEW_ID, fieldValue: 'ACTIVE', position: 0 });
+    expect(inputs[1]).toMatchObject({ viewId: VIEW_ID, fieldValue: 'DONE', position: 1 });
+  });
+
+  it('fast-path defaults missing position to the array index', async () => {
+    const file = writeFile('groups.json', JSON.stringify([
+      { fieldValue: 'A' },
+      { fieldValue: 'B' },
+      { fieldValue: 'C' },
+    ]));
+    fetchStub.reply('/metadata', { data: { getViewGroups: [] } });
+    fetchStub.reply('/metadata', { data: { createManyViewGroups: [{ id: 'g1' }, { id: 'g2' }, { id: 'g3' }] } });
+    await runView('set-groups', VIEW_ID, '--file', file);
+    const inputs = body(fetchStub.calls[1]!).variables?.inputs as { position: number }[];
+    expect(inputs.map((i) => i.position)).toEqual([0, 1, 2]);
   });
 
   it('updates when position differs, deletes orphans, leaves matches unchanged', async () => {
