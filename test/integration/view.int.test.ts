@@ -41,6 +41,27 @@ describe.skipIf(!INTEGRATION)('view integration', () => {
     expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
   });
 
+  it('update + get round-trips grouping config (--no-main-group-by + --hide-empty-groups)', async () => {
+    const created = await runView('create', '--object', 'person', '--name', `${TAG}-grp`, '--json');
+    const viewId = (JSON.parse(created.stdout.trim()) as { id: string }).id;
+    cleanup.push(viewId);
+
+    // Setting mainGroupByFieldMetadataId to a real field id is server-side
+    // gated on the field being groupable (SELECT/MULTI_SELECT/BOOLEAN), which
+    // the seeded `person` doesn't have. So we verify the CLEAR path + the
+    // shouldHideEmptyGroups toggle — both round-trip cleanly through
+    // updateView + getView's expanded VIEW_DETAIL selection.
+    await runView('update', viewId, '--no-main-group-by', '--hide-empty-groups', 'true');
+    const got = await runView('get', viewId, '--json');
+    const v = JSON.parse(got.stdout.trim()) as { mainGroupByFieldMetadataId: string | null; shouldHideEmptyGroups: boolean };
+    expect(v.mainGroupByFieldMetadataId).toBeNull();
+    expect(v.shouldHideEmptyGroups).toBe(true);
+
+    await runView('update', viewId, '--hide-empty-groups', 'false');
+    const got2 = await runView('get', viewId, '--json');
+    expect((JSON.parse(got2.stdout.trim()) as { shouldHideEmptyGroups: boolean }).shouldHideEmptyGroups).toBe(false);
+  });
+
   it('set-fields reconciles a view to the desired field set', async () => {
     const created = await runView('create', '--object', 'person', '--name', `${TAG}-fields`, '--json');
     const viewId = (JSON.parse(created.stdout.trim()) as { id: string }).id;

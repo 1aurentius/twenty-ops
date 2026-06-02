@@ -161,27 +161,63 @@ export function registerViewCommands(program: Command): void {
 
   view
     .command('update <viewId>')
-    .description('update a view')
-    .option('--name <name>')
-    .option('--icon <icon>')
+    .description('update a view (visibility, grouping config, calendar/kanban aggregation, layout)')
+    .option('--name <name>', 'view name')
+    .option('--icon <icon>', 'Tabler icon name')
     .option('--type <type>', 'TABLE | KANBAN | CALENDAR')
     .option('--visibility <v>', 'WORKSPACE | UNLISTED')
     .option('--position <n>', 'sidebar position', Number)
+    .option('--is-compact <bool>', 'true|false — compact row rendering')
+    .option('--open-record-in <v>', 'SIDE_PANEL | RECORD_PAGE')
+    .option('--any-field-filter-value <text>', 'free-text "search across fields" filter')
+    .option('--main-group-by <fieldMetadataId>', 'group the view by this fieldMetadataId (kanban or table grouping)')
+    .option('--no-main-group-by', 'clear the grouping (sets mainGroupByFieldMetadataId to null)')
+    .option('--hide-empty-groups <bool>', 'true|false — hide groups with no rows')
+    .option('--kanban-aggregate-op <op>', 'AggregateOperations enum (e.g. COUNT, SUM, AVG)')
+    .option('--kanban-aggregate-field <fieldMetadataId>', 'fieldMetadataId aggregated for the kanban subtitle')
+    .option('--calendar-field <fieldMetadataId>', 'DATE/DATE_TIME fieldMetadataId for CALENDAR-type views')
+    .option('--calendar-layout <v>', 'MONTH | WEEK | DAY (CALENDAR-type views)')
+    .option('--file <path>', 'apply the JSON file as the UpdateViewInput body (other flags merge over it)')
     .action(
       async (
         viewId: string,
-        opts: { name?: string; icon?: string; type?: string; visibility?: string; position?: number },
+        opts: {
+          name?: string; icon?: string; type?: string; visibility?: string; position?: number;
+          isCompact?: string; openRecordIn?: string; anyFieldFilterValue?: string;
+          mainGroupBy?: string | false; hideEmptyGroups?: string;
+          kanbanAggregateOp?: string; kanbanAggregateField?: string;
+          calendarField?: string; calendarLayout?: string;
+          file?: string;
+        },
         cmd: Command,
       ) => {
         const ctx = makeCtx(cmd);
         const input: Record<string, unknown> = {};
+        if (opts.file) {
+          const loaded = loadInputFile<Record<string, unknown>>(opts.file);
+          if (Array.isArray(loaded) || typeof loaded !== 'object' || loaded === null) {
+            throw new CliError(`${opts.file} must contain a single JSON/YAML object`, EXIT.USAGE);
+          }
+          Object.assign(input, loaded);
+        }
         if (opts.name !== undefined) input.name = opts.name;
         if (opts.icon !== undefined) input.icon = opts.icon;
         if (opts.type !== undefined) input.type = opts.type.toUpperCase();
         if (opts.visibility !== undefined) input.visibility = opts.visibility.toUpperCase();
         if (opts.position !== undefined) input.position = opts.position;
+        if (opts.isCompact !== undefined) input.isCompact = parseBool(opts.isCompact, '--is-compact');
+        if (opts.openRecordIn !== undefined) input.openRecordIn = opts.openRecordIn.toUpperCase();
+        if (opts.anyFieldFilterValue !== undefined) input.anyFieldFilterValue = opts.anyFieldFilterValue;
+        // commander encodes --no-X as opts.X === false; --main-group-by <id> sets a string.
+        if (opts.mainGroupBy === false) input.mainGroupByFieldMetadataId = null;
+        else if (typeof opts.mainGroupBy === 'string') input.mainGroupByFieldMetadataId = opts.mainGroupBy;
+        if (opts.hideEmptyGroups !== undefined) input.shouldHideEmptyGroups = parseBool(opts.hideEmptyGroups, '--hide-empty-groups');
+        if (opts.kanbanAggregateOp !== undefined) input.kanbanAggregateOperation = opts.kanbanAggregateOp.toUpperCase();
+        if (opts.kanbanAggregateField !== undefined) input.kanbanAggregateOperationFieldMetadataId = opts.kanbanAggregateField;
+        if (opts.calendarField !== undefined) input.calendarFieldMetadataId = opts.calendarField;
+        if (opts.calendarLayout !== undefined) input.calendarLayout = opts.calendarLayout.toUpperCase();
         if (Object.keys(input).length === 0) {
-          throw new CliError('nothing to update — pass at least one field flag', EXIT.USAGE);
+          throw new CliError('nothing to update — pass at least one field flag or --file', EXIT.USAGE);
         }
         const data = await ctx.metadata.request<{ updateView: View }>(
           `mutation Update($id: String!, $input: UpdateViewInput!) {
@@ -607,4 +643,11 @@ function requireString(obj: Record<string, unknown>, key: string, file: string):
 
 function pruneUndefined(obj: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(Object.entries(obj).filter(([, v]) => v !== undefined));
+}
+
+function parseBool(raw: string, flag: string): boolean {
+  const v = raw.toLowerCase();
+  if (v === 'true' || v === '1' || v === 'yes') return true;
+  if (v === 'false' || v === '0' || v === 'no') return false;
+  throw new CliError(`${flag} must be true|false (got "${raw}")`, EXIT.USAGE);
 }

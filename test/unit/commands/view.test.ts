@@ -240,6 +240,72 @@ describe('view update', () => {
     await runView('update', VIEW_ID, '--name', 'Renamed');
     expect(body(fetchStub.calls[0]!).variables).toEqual({ id: VIEW_ID, input: { name: 'Renamed' } });
   });
+
+  it('--main-group-by sets mainGroupByFieldMetadataId', async () => {
+    fetchStub.reply('/metadata', { data: { updateView: { id: VIEW_ID, name: 'V', type: 'TABLE', objectMetadataId: OBJECT_ID, icon: 'IconA', visibility: 'WORKSPACE' } } });
+    await runView('update', VIEW_ID, '--main-group-by', FIELD_ID_A);
+    expect(body(fetchStub.calls[0]!).variables).toEqual({
+      id: VIEW_ID,
+      input: { mainGroupByFieldMetadataId: FIELD_ID_A },
+    });
+  });
+
+  it('--no-main-group-by clears mainGroupByFieldMetadataId to null', async () => {
+    fetchStub.reply('/metadata', { data: { updateView: { id: VIEW_ID, name: 'V', type: 'TABLE', objectMetadataId: OBJECT_ID, icon: 'IconA', visibility: 'WORKSPACE' } } });
+    await runView('update', VIEW_ID, '--no-main-group-by');
+    expect(body(fetchStub.calls[0]!).variables).toEqual({
+      id: VIEW_ID,
+      input: { mainGroupByFieldMetadataId: null },
+    });
+  });
+
+  it('--hide-empty-groups parses true/false', async () => {
+    fetchStub.reply('/metadata', { data: { updateView: { id: VIEW_ID, name: 'V', type: 'TABLE', objectMetadataId: OBJECT_ID, icon: 'IconA', visibility: 'WORKSPACE' } } });
+    await runView('update', VIEW_ID, '--hide-empty-groups', 'true');
+    expect(body(fetchStub.calls[0]!).variables).toEqual({
+      id: VIEW_ID,
+      input: { shouldHideEmptyGroups: true },
+    });
+  });
+
+  it('--hide-empty-groups USAGE on garbage value', async () => {
+    const err = await runView('update', VIEW_ID, '--hide-empty-groups', 'maybe').catch((e: unknown) => e);
+    expect((err as { exitCode?: number }).exitCode).toBe(EXIT.USAGE);
+  });
+
+  it('--calendar-field + --calendar-layout drives the calendar config', async () => {
+    fetchStub.reply('/metadata', { data: { updateView: { id: VIEW_ID, name: 'V', type: 'CALENDAR', objectMetadataId: OBJECT_ID, icon: 'IconA', visibility: 'WORKSPACE' } } });
+    await runView('update', VIEW_ID,
+      '--calendar-field', FIELD_ID_A,
+      '--calendar-layout', 'month',
+    );
+    expect(body(fetchStub.calls[0]!).variables?.input).toMatchObject({
+      calendarFieldMetadataId: FIELD_ID_A,
+      calendarLayout: 'MONTH',
+    });
+  });
+
+  it('--kanban-aggregate-op + --kanban-aggregate-field drives kanban aggregation', async () => {
+    fetchStub.reply('/metadata', { data: { updateView: { id: VIEW_ID, name: 'V', type: 'KANBAN', objectMetadataId: OBJECT_ID, icon: 'IconA', visibility: 'WORKSPACE' } } });
+    await runView('update', VIEW_ID,
+      '--kanban-aggregate-op', 'sum',
+      '--kanban-aggregate-field', FIELD_ID_A,
+    );
+    expect(body(fetchStub.calls[0]!).variables?.input).toMatchObject({
+      kanbanAggregateOperation: 'SUM',
+      kanbanAggregateOperationFieldMetadataId: FIELD_ID_A,
+    });
+  });
+
+  it('--file applies a JSON body; per-flag overrides win over the file', async () => {
+    const file = writeFile('upd.json', JSON.stringify({ name: 'From File', shouldHideEmptyGroups: false }));
+    fetchStub.reply('/metadata', { data: { updateView: { id: VIEW_ID, name: 'X', type: 'TABLE', objectMetadataId: OBJECT_ID, icon: 'IconA', visibility: 'WORKSPACE' } } });
+    await runView('update', VIEW_ID, '--file', file, '--name', 'Wins');
+    expect(body(fetchStub.calls[0]!).variables?.input).toEqual({
+      name: 'Wins',
+      shouldHideEmptyGroups: false,
+    });
+  });
 });
 
 describe('view delete', () => {
