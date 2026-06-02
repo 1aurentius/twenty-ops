@@ -100,7 +100,7 @@ export function registerViewCommands(program: Command): void {
 
   view
     .command('get <viewId>')
-    .description('show one view with its fields, filters and sorts')
+    .description("show one view with its fields, filters, sorts, groups, field-groups, filter-groups, and grouping state")
     .action(async (viewId: string, _opts, cmd: Command) => {
       const ctx = makeCtx(cmd);
       const data = await ctx.metadata.request<{ getView: View | null }>(
@@ -110,7 +110,14 @@ export function registerViewCommands(program: Command): void {
       if (!data.getView) throw new CliError(`view "${viewId}" not found`, EXIT.NOT_FOUND);
       emitOne(
         data.getView as unknown as Record<string, unknown>,
-        ['id', 'name', 'objectMetadataId', 'type', 'icon', 'position', 'visibility', 'viewFields', 'viewFilters', 'viewSorts'],
+        [
+          'id', 'name', 'objectMetadataId', 'type', 'icon', 'position', 'visibility',
+          'mainGroupByFieldMetadataId', 'shouldHideEmptyGroups',
+          'kanbanAggregateOperation', 'kanbanAggregateOperationFieldMetadataId',
+          'calendarFieldMetadataId',
+          'viewFields', 'viewFilters', 'viewFilterGroups', 'viewSorts',
+          'viewGroups', 'viewFieldGroups',
+        ],
         ctx.out,
       );
     });

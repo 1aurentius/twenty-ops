@@ -13,12 +13,27 @@ export const VIEW_FILTER_GROUP = `id parentViewFilterGroupId logicalOperator pos
 /** View field group — collapsible section of fields. Keyed by `name` per view. */
 export const VIEW_FIELD_GROUP = `id name position isVisible viewId`;
 
-/** Full view detail — summary plus its widgets. */
+/**
+ * Full view detail — summary, grouping config, plus its child collections.
+ *
+ * Grouping fields (mainGroupByFieldMetadataId / shouldHideEmptyGroups +
+ * viewGroups[]) are surfaced so an agent inspecting a kanban-grouped or
+ * table-grouped view can see the live grouping state. Same for the field
+ * + filter group hierarchies. Keeps the selection scalar-safe (no union
+ * types, e.g. avoids configuration / position unions from page-layout).
+ */
 export const VIEW_DETAIL = `
   ${VIEW_SUMMARY}
+  mainGroupByFieldMetadataId shouldHideEmptyGroups
+  kanbanAggregateOperation kanbanAggregateOperationFieldMetadataId
+  calendarFieldMetadataId calendarLayout
+  isCompact openRecordIn anyFieldFilterValue
   viewFields { ${VIEW_FIELD} }
   viewFilters { ${VIEW_FILTER} }
+  viewFilterGroups { ${VIEW_FILTER_GROUP} }
   viewSorts { ${VIEW_SORT} }
+  viewGroups { ${VIEW_GROUP} }
+  viewFieldGroups { ${VIEW_FIELD_GROUP} }
 `;
 
 export const NAV_ITEM = `id type name icon viewId folderId link color position`;

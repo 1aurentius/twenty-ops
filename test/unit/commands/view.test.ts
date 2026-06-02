@@ -144,6 +144,62 @@ describe('view get', () => {
     const err = await runView('get', VIEW_ID).catch((e: unknown) => e);
     expect((err as { exitCode?: number }).exitCode).toBe(EXIT.NOT_FOUND);
   });
+
+  it('surfaces grouping state + every child collection in the detail projection', async () => {
+    // The selection set must include mainGroupByFieldMetadataId,
+    // shouldHideEmptyGroups, kanbanAggregateOperation, the calendar
+    // grouping fields, plus viewGroups, viewFieldGroups, viewFilterGroups
+    // — otherwise an agent inspecting a kanban-grouped view sees an empty
+    // record and can't diagnose grouping issues. This regression test pins
+    // the contract so future SUMMARY tweaks don't quietly drop fields.
+    fetchStub.reply('/metadata', {
+      data: {
+        getView: {
+          id: VIEW_ID, name: 'V', objectMetadataId: OBJECT_ID,
+          type: 'TABLE', icon: 'IconA', position: 0, visibility: 'WORKSPACE',
+          mainGroupByFieldMetadataId: 'fmd-phase',
+          shouldHideEmptyGroups: true,
+          kanbanAggregateOperation: null,
+          kanbanAggregateOperationFieldMetadataId: null,
+          calendarFieldMetadataId: null,
+          viewFields: [], viewFilters: [], viewFilterGroups: [], viewSorts: [],
+          viewGroups: [{ id: 'g1', fieldValue: 'A', position: 0, isVisible: true, viewId: VIEW_ID }],
+          viewFieldGroups: [],
+        },
+      },
+    });
+    const { stdout } = await runView('get', VIEW_ID, '--json');
+    const out = JSON.parse(stdout.trim()) as Record<string, unknown>;
+    expect(out.mainGroupByFieldMetadataId).toBe('fmd-phase');
+    expect(out.shouldHideEmptyGroups).toBe(true);
+    expect(Array.isArray(out.viewGroups)).toBe(true);
+    expect((out.viewGroups as unknown[]).length).toBe(1);
+    expect(Array.isArray(out.viewFieldGroups)).toBe(true);
+    expect(Array.isArray(out.viewFilterGroups)).toBe(true);
+  });
+
+  it('emits VIEW_DETAIL query with all expected child selections', async () => {
+    fetchStub.reply('/metadata', {
+      data: {
+        getView: {
+          id: VIEW_ID, name: 'V', objectMetadataId: OBJECT_ID,
+          type: 'TABLE', icon: 'IconA', position: 0, visibility: 'WORKSPACE',
+          mainGroupByFieldMetadataId: null, shouldHideEmptyGroups: false,
+          kanbanAggregateOperation: null, kanbanAggregateOperationFieldMetadataId: null,
+          calendarFieldMetadataId: null,
+          viewFields: [], viewFilters: [], viewFilterGroups: [], viewSorts: [],
+          viewGroups: [], viewFieldGroups: [],
+        },
+      },
+    });
+    await runView('get', VIEW_ID);
+    const query = body(fetchStub.calls[0]!).query;
+    expect(query).toContain('mainGroupByFieldMetadataId');
+    expect(query).toContain('shouldHideEmptyGroups');
+    expect(query).toContain('viewGroups');
+    expect(query).toContain('viewFieldGroups');
+    expect(query).toContain('viewFilterGroups');
+  });
 });
 
 describe('view create', () => {
