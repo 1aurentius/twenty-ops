@@ -62,8 +62,28 @@ export class GraphQLClient {
     }
 
     if (body.errors?.length) {
-      const message = body.errors.map((e) => e.message).join('; ');
-      throw new CliError(message, exitCodeForGraphQLError(body.errors));
+      const exitCode = exitCodeForGraphQLError(body.errors);
+      let message = body.errors.map((e) => e.message).join('; ');
+      // Twenty's NOT_FOUND errors carry the bare message "Record not found"
+      // — which doesn't tell an agent WHICH record. When the query has a
+      // simple `$id` variable (the common get-by-id pattern) or an
+      // `{input:{id}}` wrapper (the metadata API pattern), append the id
+      // so the agent sees which record blew up.
+      if (exitCode === EXIT.NOT_FOUND && variables && /record not found|does not exist/i.test(message)) {
+        let candidate: string | undefined;
+        if (typeof variables.id === 'string') {
+          candidate = variables.id;
+        } else if (
+          variables.input &&
+          typeof (variables.input as { id?: unknown }).id === 'string'
+        ) {
+          candidate = (variables.input as { id: string }).id;
+        }
+        if (candidate !== undefined) {
+          message = `${message} (id: ${candidate})`;
+        }
+      }
+      throw new CliError(message, exitCode);
     }
     if (body.data === undefined) {
       throw new CliError(`empty response from ${this.endpoint}`, EXIT.API);

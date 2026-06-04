@@ -146,4 +146,40 @@ describe('NOT_FOUND messages include the resource id', () => {
       'nosuchobject',
     );
   });
+
+  /**
+   * GraphQLClient-level: when Twenty returns a bare "Record not found" with
+   * NOT_FOUND extension code, the client appends `(id: <variables.id>)` so
+   * the agent sees which record blew up. Pin the contract across both
+   * variable-shape patterns.
+   */
+  describe('GraphQLClient injects id into bare "Record not found" messages', () => {
+    it('passes id from variables.id (Core API `dashboard(filter:{id:{eq:$id}})`)', async () => {
+      fetchStub.reply('/graphql', {
+        data: { dashboard: null },
+        errors: [{ message: 'Record not found', extensions: { code: 'NOT_FOUND' } }],
+      });
+      const err = await runCli(
+        await import('../../src/commands/dashboard.js').then((m) => m.registerDashboardCommands),
+        ['dashboard', 'get', NONESUCH],
+      ).catch((e: unknown) => e) as ThrownError;
+      expect(err.exitCode).toBe(EXIT.NOT_FOUND);
+      expect(err.message ?? '').toContain('Record not found');
+      expect(err.message ?? '').toContain(NONESUCH);
+    });
+
+    it('passes id from variables.input.id (metadata API `findOneLogicFunction(input:$input)`)', async () => {
+      fetchStub.reply('/metadata', {
+        errors: [{ message: 'Record does not exist', extensions: { code: 'NOT_FOUND' } }],
+      });
+      // logic-function get falls through to resolveLogicFunctionId which queries findOne.
+      const err = await runCli(
+        await import('../../src/commands/logic-function.js').then((m) => m.registerLogicFunctionCommands),
+        ['logic-function', 'get', NONESUCH],
+      ).catch((e: unknown) => e) as ThrownError;
+      expect(err.exitCode).toBe(EXIT.NOT_FOUND);
+      // Either the CLI's resolveLogicFunctionId message OR the injected id form.
+      expect(err.message ?? '').toContain(NONESUCH);
+    });
+  });
 });
