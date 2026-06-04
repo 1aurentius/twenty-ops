@@ -81,8 +81,16 @@ registerMarketplaceCommands(program);
 registerFrontComponentCommands(program);
 registerCommandMenuItemCommands(program);
 
-// Throw CommanderError instead of calling process.exit, so we control exit codes.
-program.exitOverride();
+// Throw CommanderError instead of calling process.exit, so we control exit
+// codes. exitOverride() only configures the command it's called on, so we
+// walk the tree and apply it to every subcommand — otherwise commander's
+// internal `_exit` on a deep subcommand (e.g. on missing requiredOption)
+// bypasses our catch and exits with rc=1 instead of EXIT.USAGE.
+function applyExitOverride(cmd: Command): void {
+  cmd.exitOverride();
+  for (const child of cmd.commands) applyExitOverride(child);
+}
+applyExitOverride(program);
 
 try {
   await program.parseAsync(process.argv);
