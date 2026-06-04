@@ -69,6 +69,22 @@ function pickList(payload: unknown, namePlural: string): RecordRow[] {
   return [];
 }
 
+/**
+ * Extract the opaque cursor for the next page from a Twenty REST response.
+ *
+ * Twenty's REST API returns `pageInfo: { startCursor, endCursor,
+ * hasNextPage, hasPreviousPage }` at the top level. The `endCursor` is a
+ * base64-encoded JSON envelope (`btoa(JSON.stringify({id: "..."}))`), NOT
+ * a bare UUID. Passing a bare UUID to `?starting_after=` returns
+ * `400 Invalid cursor: <id>`. So callers paging through results must
+ * read `pageInfo.endCursor` verbatim and pass it back as the next cursor.
+ */
+function pickNextCursor(payload: unknown): string | undefined {
+  const pi = (payload as { pageInfo?: { endCursor?: string; hasNextPage?: boolean } } | undefined)?.pageInfo;
+  if (!pi?.hasNextPage) return undefined;
+  return pi.endCursor;
+}
+
 async function resolveNames(ctx: Ctx, ref: string): Promise<ObjectNames> {
   return resolveObjectName(ctx.metadata, ref);
 }
@@ -79,8 +95,8 @@ function registerList(record: Command): void {
     .description('list records (Twenty REST filter DSL: `field[op]:value`)')
     .option('--filter <expr>', 'REST filter expression, e.g. `email[eq]:"a@b.com"`')
     .option('--limit <n>', 'page size (default 60, max 60)', Number)
-    .option('--starting-after <id>', 'cursor — id from a previous page')
-    .option('--ending-before <id>', 'cursor — id from a previous page (reverse)')
+    .option('--starting-after <cursor>', 'opaque cursor (use `pageInfo.endCursor` from a previous --json call)')
+    .option('--ending-before <cursor>', 'opaque cursor (use `pageInfo.startCursor` from a previous --json call)')
     .option('--order-by <expr>', 'e.g. `createdAt[DescNullsFirst]`')
     .action(
       async (
@@ -218,6 +234,10 @@ function registerBulkUpsert(record: Command): void {
         // Page through current state and index by the match key. We don't filter
         // server-side — the user's --key may be any field, and `bulk-upsert` is
         // expected to handle full sync semantics (including detecting deletes).
+        //
+        // Paging uses Twenty's `pageInfo.endCursor` (a base64-encoded JSON
+        // envelope, not a bare UUID). Constructing a cursor from the last
+        // row's id returns 400 "Invalid cursor: <uuid>" — verified live.
         const current: RecordRow[] = [];
         let cursor: string | undefined;
         const limit = Math.max(1, Math.min(60, opts.pageSize));
@@ -229,8 +249,7 @@ function registerBulkUpsert(record: Command): void {
           });
           const rows = pickList(payload, names.namePlural);
           current.push(...rows);
-          if (rows.length < limit) break;
-          cursor = rows[rows.length - 1]?.id;
+          cursor = pickNextCursor(payload);
           if (!cursor) break;
         }
 

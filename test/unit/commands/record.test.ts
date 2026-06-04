@@ -308,6 +308,44 @@ describe('record bulk-upsert', () => {
     expect(posts[0]?.body).toMatchObject({ email: 'alice@example.com', name: 'Alice' });
   });
 
+  it('uses pageInfo.endCursor (NOT the bare row id) when paging through current state', async () => {
+    // Real bug found in QA: passing rows[last].id as `starting_after` returns
+    // "400 Invalid cursor: <uuid>" on the second page request. Twenty's REST
+    // API expects the opaque base64 envelope from pageInfo.endCursor.
+    scriptPersonObject(fetchStub);
+    // Page 1: 2 rows + pageInfo signals more pages
+    fetchStub.reply('/rest/people', {
+      data: { people: [
+        { id: 'p-1', email: 'a@example.com', name: 'A' },
+        { id: 'p-2', email: 'b@example.com', name: 'B' },
+      ] },
+      pageInfo: { endCursor: 'OPAQUE_CURSOR_1', hasNextPage: true },
+    });
+    // Page 2: final
+    fetchStub.reply('/rest/people', {
+      data: { people: [{ id: 'p-3', email: 'c@example.com', name: 'C' }] },
+      pageInfo: { endCursor: null, hasNextPage: false },
+    });
+
+    const file = writeFile('upsert.json', [
+      { email: 'a@example.com', name: 'A' },
+      { email: 'b@example.com', name: 'B' },
+      { email: 'c@example.com', name: 'C' },
+    ]);
+    await runCli(registerRecordCommands, [
+      'record', 'bulk-upsert', 'person',
+      '--file', file, '--key', 'email', '--json',
+    ]);
+
+    const gets = fetchStub.calls.filter((c) => c.method === 'GET' && c.url.includes('/rest/people'));
+    expect(gets).toHaveLength(2);
+    // First GET should not have a starting_after param.
+    expect(gets[0]!.url).not.toMatch(/starting_after=/);
+    // Second GET must pass the OPAQUE cursor verbatim (not the row id "p-2").
+    expect(gets[1]!.url).toMatch(/starting_after=OPAQUE_CURSOR_1/);
+    expect(gets[1]!.url).not.toMatch(/starting_after=p-2/);
+  });
+
   it('refuses to run when a row is missing the match key', async () => {
     scriptPersonObject(fetchStub);
     const file = writeFile('bad.json', [{ name: 'No-email' }]);
