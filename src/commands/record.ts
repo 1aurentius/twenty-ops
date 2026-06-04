@@ -121,6 +121,14 @@ function registerList(record: Command): void {
         });
         const rows = pickList(payload, names.namePlural);
         emitList(rows, recordColumns(ctx, rows), ctx.out);
+        // Help agents chain pages: when more rows exist, write pageInfo to
+        // stderr as a single JSON line. Stdout stays pure JSON-Lines for
+        // streaming/grep-ability; stderr is already reserved for non-data
+        // diagnostics (and is suppressed under --quiet).
+        const pi = (payload as { pageInfo?: { endCursor?: string; hasNextPage?: boolean } } | undefined)?.pageInfo;
+        if (pi?.hasNextPage && !ctx.out.quiet) {
+          process.stderr.write(`${JSON.stringify({ _pageInfo: pi })}\n`);
+        }
       },
     );
 }

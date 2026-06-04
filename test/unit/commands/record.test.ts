@@ -278,6 +278,39 @@ describe('record merge', () => {
   });
 });
 
+describe('record list paging', () => {
+  it('writes pageInfo to stderr when hasNextPage is true (agents can chain pages)', async () => {
+    scriptPersonObject(fetchStub);
+    fetchStub.reply('/rest/people', {
+      data: { people: [{ id: 'p1', name: 'A' }] },
+      pageInfo: { endCursor: 'OPAQUE_NEXT', hasNextPage: true, startCursor: 'OPAQUE_START', hasPreviousPage: false },
+    });
+    const { stderr } = await runCli(registerRecordCommands, ['record', 'list', 'person', '--limit', '1', '--json']);
+    expect(stderr).toContain('OPAQUE_NEXT');
+    expect(stderr).toContain('hasNextPage');
+  });
+
+  it('omits pageInfo from stderr when hasNextPage is false', async () => {
+    scriptPersonObject(fetchStub);
+    fetchStub.reply('/rest/people', {
+      data: { people: [{ id: 'p1', name: 'A' }] },
+      pageInfo: { endCursor: 'X', hasNextPage: false, startCursor: 'Y', hasPreviousPage: false },
+    });
+    const { stderr } = await runCli(registerRecordCommands, ['record', 'list', 'person', '--limit', '1', '--json']);
+    expect(stderr).not.toContain('_pageInfo');
+  });
+
+  it('--quiet suppresses pageInfo on stderr', async () => {
+    scriptPersonObject(fetchStub);
+    fetchStub.reply('/rest/people', {
+      data: { people: [{ id: 'p1', name: 'A' }] },
+      pageInfo: { endCursor: 'NEXT', hasNextPage: true, startCursor: 'S', hasPreviousPage: false },
+    });
+    const { stderr } = await runCli(registerRecordCommands, ['record', 'list', 'person', '--limit', '1', '--json', '--quiet']);
+    expect(stderr).not.toContain('NEXT');
+  });
+});
+
 describe('record bulk-upsert', () => {
   it('creates missing records and skips unchanged ones', async () => {
     scriptPersonObject(fetchStub);
