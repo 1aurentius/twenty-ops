@@ -61,7 +61,7 @@ A row that's not `yes ✓ ✓ ✓` fails the strict merge bar — see the
 | `domain custom` (check)                       | yes     | ✓ | ✓                                              | |
 | `app-registration` (CRUD + rotate + transfer + variables) | yes | ✓ | ✓                          | |
 | `application` (install/uninstall/upgrade/sync + tokens) | yes | ✓ | ✓                          | |
-| `marketplace` (install + sync-catalog)        | yes     | ✓ |                                               | |
+| `marketplace` (install + sync-catalog)        | yes     | ✓ | ✓                                              | |
 | `front-component` (CRUD)                      | yes     | ✓ | ✓ (singular get AUTH-gated for API key)         | |
 | `command-menu-item` (CRUD)                    | yes     | ✓ | ✓                                              | |
 | `page-layout sync`                            | yes     | ✓ |                                                | |
